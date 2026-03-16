@@ -31,9 +31,9 @@ const latestArticles = [
 
 export default function LatestArticlesSection() {
   return (
-    <section className="bg-white py-20 md:py-24">
+    <section className="bg-white py-14 md:py-24">
       <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
-        <h2 className="text-center font-serif text-5xl font-bold text-[#1d2238] md:text-6xl">
+        <h2 className="text-center font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
           Events & Updates
         </h2>
 
@@ -46,12 +46,12 @@ export default function LatestArticlesSection() {
               <img
                 src={article.image}
                 alt={article.title}
-                className="h-84 w-full object-cover"
+                className="h-60 w-full object-cover sm:h-72 md:h-84"
                 loading="lazy"
                 referrerPolicy="no-referrer"
               />
 
-              <div className="px-9 py-8">
+              <div className="px-5 py-6 sm:px-7 md:px-9 md:py-8">
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-2 leading-none text-[#667085]">
                   <p className="inline-flex items-center gap-2 text-sm leading-none md:text-base">
                     <span aria-hidden="true">👤</span>
@@ -64,7 +64,7 @@ export default function LatestArticlesSection() {
                 </div>
 
                 <h3
-                  className={`mt-6 font-serif text-3xl leading-tight font-bold ${
+                  className={`mt-5 font-serif text-2xl leading-tight font-bold md:mt-6 md:text-3xl ${
                     article.highlighted ? "text-[#63c37a]" : "text-[#1d2238]"
                   }`}
                 >
@@ -73,7 +73,7 @@ export default function LatestArticlesSection() {
 
                 <span className="mt-5 block h-0.5 w-9 bg-[#63c37a]" />
 
-                <p className="mt-5 text-base leading-8 text-[#646e80] md:text-lg md:leading-8">
+                <p className="mt-5 text-sm leading-7 text-[#646e80] sm:text-base md:text-lg md:leading-8">
                   {article.excerpt}
                 </p>
 

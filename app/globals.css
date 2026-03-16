@@ -18,3 +18,36 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
 }
+
+nav ul a {
+  text-decoration: none;
+  position: relative;
+  overflow: hidden;
+  padding-bottom: 6px;
+}
+
+nav ul a::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background-color: #63c37a;
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+nav ul a:hover::after {
+  width: 100%;
+  animation: heartbeat116 1.5s ease-in-out 0.3s infinite;
+}
+
+@keyframes heartbeat116 {
+  0%,
+  100% {
+    width: 100%;
+  }
+  50% {
+    width: 60%;
+  }
+}
