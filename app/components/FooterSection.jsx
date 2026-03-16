@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 const causes = [
   "Skill Development Training",
   "Youth Empowerment Workshops",
@@ -24,13 +26,13 @@ export default function FooterSection() {
               className="inline-flex items-center gap-3"
               aria-label="SDEAS Welfare Foundation"
             >
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-[#ff6a45] to-[#f19d39] text-sm leading-none text-white">
-                ❤
-              </span>
-              <span className="text-4xl font-extrabold leading-none tracking-tight md:text-5xl">
-                <span className="text-white">SDEAS</span>
-                <span className="text-[#63c37a]"> Foundation</span>
-              </span>
+              <Image
+                src="/logo.jpeg"
+                alt="SDEAS Welfare Foundation"
+                width={220}
+                height={56}
+                className="h-12 w-auto object-contain"
+              />
             </a>
 
             <p className="mt-8 max-w-[32ch] text-base leading-relaxed text-[#f1f1f1] md:text-lg">

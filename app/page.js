@@ -28,19 +28,20 @@ export default function Home() {
           isScrolled ? "shadow-sm" : ""
         }`}
       >
-        <nav className="relative flex h-20 w-full items-center justify-between px-4 md:px-8 lg:px-10">
+        <nav className="relative flex h-24 w-full items-center justify-between px-4 md:px-8 lg:px-10">
           <a
             href="#"
             className="flex items-center gap-3"
             aria-label="SDEAS Welfare Foundation Home"
           >
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-linear-to-br from-[#ff6a45] to-[#f19d39] text-base leading-none text-white shadow-sm">
-              ❤
-            </span>
-            <span className="text-3xl font-extrabold leading-none tracking-tight md:text-4xl">
-              <span className="text-[#171a34]">SDEAS</span>
-              <span className="text-[#63c37a]"> Foundation</span>
-            </span>
+            <Image
+              src="/logo.jpeg"
+              alt="SDEAS Welfare Foundation"
+              width={220}
+              height={56}
+              priority
+              className="h-12 w-auto object-contain md:h-14"
+            />
           </a>
 
           <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-base font-medium text-[#576076] xl:flex">
@@ -84,7 +85,7 @@ export default function Home() {
           <div className="flex items-center justify-end pl-6 md:pl-8">
             <a
               href="#"
-              className={`inline-flex h-12 items-center justify-center gap-2 rounded-sm border border-[#63c37a] px-6 text-base font-semibold transition-colors ${
+              className={`inline-flex h-14 items-center justify-center gap-2 rounded-sm border border-[#63c37a] px-8 text-lg font-semibold transition-colors ${
                 isScrolled
                   ? "bg-[#63c37a] text-[#ffffff] hover:bg-transparent hover:text-[#63c37a]"
                   : "bg-transparent text-[#63c37a] hover:bg-[#63c37a] hover:text-[#ffffff]"
@@ -97,10 +98,8 @@ export default function Home() {
         </nav>
       </header>
 
-      <section className="relative isolate overflow-hidden">
-        <div className="absolute inset-y-0 right-0 w-[30%] bg-[#eaf5e9]" />
-
-        <div className="relative mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-350 grid-cols-1 items-center gap-8 px-4 pt-12 pb-0 md:px-8 lg:grid-cols-2 lg:gap-12 lg:px-10">
+      <section className="relative isolate overflow-hidden bg-white">
+        <div className="relative mx-auto grid min-h-[calc(100vh-96px)] w-full max-w-350 grid-cols-1 items-center gap-8 px-4 pt-12 pb-0 md:px-8 lg:grid-cols-2 lg:gap-12 lg:px-10">
           <div className="max-w-3xl">
             <h1 className="text-5xl font-extrabold leading-tight text-[#111827] md:text-6xl lg:text-7xl">
               <span className="text-[#63c37a]">Empowering Youth</span>
@@ -123,7 +122,7 @@ export default function Home() {
 
           <div className="relative flex h-full items-end justify-center overflow-visible lg:justify-end">
             <Image
-              src="/hero.png"
+              src="/Gemini_Generated_Image_owy26wowy26wowy2.png"
               alt="SDEAS youth skill development and training"
               width={1100}
               height={1250}
