@@ -9,6 +9,7 @@ const navItems = [
   "About",
   "Programs",
   "Gallery",
+  "Blog",
   "Partner With Us",
   "Contact",
 ];
@@ -18,6 +19,7 @@ function getHref(item) {
   if (item === "About") return "/about";
   if (item === "Programs") return "/programs";
   if (item === "Gallery") return "/gallery";
+  if (item === "Blog") return "/blog";
   if (item === "Partner With Us") return "/partner-with-us";
   if (item === "Contact") return "/contact";
   return "#";
@@ -49,7 +51,7 @@ export default function Navbar() {
           aria-label="SDEAS Welfare Foundation Home"
         >
           <Image
-            src="/logo.jpeg"
+            src="/NGO%20LOGO.png"
             alt="SDEAS Welfare Foundation"
             width={220}
             height={56}

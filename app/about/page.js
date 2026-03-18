@@ -130,7 +130,7 @@ export default function About() {
   }, [parsedStats.length]);
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen overflow-x-hidden bg-white">
       <Navbar />
 
       {/* ─── Hero ─────────────────────────────────────────────────────── */}
@@ -181,7 +181,7 @@ export default function About() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           {/* Mobile slideshow */}
           <div className="md:hidden">
-            <div className="relative min-h-16">
+            <div className="relative min-h-16 overflow-hidden">
               {parsedStats.map((stat, index) => (
                 <div
                   key={stat.label}

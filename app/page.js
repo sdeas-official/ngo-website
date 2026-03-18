@@ -62,7 +62,7 @@ export default function Home() {
 
           <div className="relative flex h-full items-end justify-center overflow-visible lg:justify-end">
             <Image
-              src="/Gemini_Generated_Image_owy26wowy26wowy2.png"
+              src="/Gemini_Generated_Image_qxe6jxqxe6jxqxe6.png"
               alt="SDEAS youth skill development and training"
               width={1100}
               height={1250}
