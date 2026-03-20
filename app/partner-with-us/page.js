@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ID } from "appwrite";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { DonationCard } from "../components/DonationCard";
 import { Button } from "../components/Button";
+import { createDatabasesClient } from "../../lib/appwriteClient";
 
 export default function PartnerWithUs() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -15,18 +19,66 @@ export default function PartnerWithUs() {
     skills: "",
     availability: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    alert("Thank you for your interest! We will contact you soon.");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      location: "",
-      skills: "",
-      availability: "",
-    });
+
+    if (
+      !databases ||
+      !config.databaseId ||
+      !config.collections.partnerResponses
+    ) {
+      setSubmitSuccess("");
+      setSubmitError(
+        "Partner form is not configured yet. Add NEXT_PUBLIC_APPWRITE_COLLECTION_PARTNER_ID in your .env.",
+      );
+      return;
+    }
+
+    const digitsOnlyPhone = (formData.phone || "").replace(/\D/g, "");
+    if (!/^\d{10,12}$/.test(digitsOnlyPhone)) {
+      setSubmitSuccess("");
+      setSubmitError("Phone number must contain 10 to 12 digits.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError("");
+      setSubmitSuccess("");
+
+      await databases.createDocument(
+        config.databaseId,
+        config.collections.partnerResponses,
+        ID.unique(),
+        {
+          name: formData.name.trim(),
+          email: formData.email.trim(),
+          phoneNo: Number(digitsOnlyPhone),
+          location: formData.location.trim(),
+          skills: formData.skills.trim(),
+          availability: formData.availability.trim(),
+        },
+      );
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        location: "",
+        skills: "",
+        availability: "",
+      });
+      setSubmitSuccess("Thank you! Your partner request has been submitted.");
+    } catch (error) {
+      setSubmitSuccess("");
+      setSubmitError(error?.message || "Failed to submit your request.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -206,10 +258,14 @@ export default function PartnerWithUs() {
                     required
                     value={formData.phone}
                     onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
+                      setFormData({
+                        ...formData,
+                        phone: e.target.value.replace(/\D/g, "").slice(0, 12),
+                      })
                     }
+                    pattern="[0-9]{10,12}"
                     className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
-                    placeholder="+91 XXXXX XXXXX"
+                    placeholder="10 to 12 digit number"
                   />
                 </div>
                 <div>
@@ -233,6 +289,7 @@ export default function PartnerWithUs() {
                   </label>
                   <textarea
                     rows={3}
+                    required
                     value={formData.skills}
                     onChange={(e) =>
                       setFormData({ ...formData, skills: e.target.value })
@@ -246,6 +303,7 @@ export default function PartnerWithUs() {
                     Availability
                   </label>
                   <select
+                    required
                     value={formData.availability}
                     onChange={(e) =>
                       setFormData({ ...formData, availability: e.target.value })
@@ -261,10 +319,23 @@ export default function PartnerWithUs() {
                 </div>
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557]"
                 >
-                  Submit Application
+                  {isSubmitting ? "Submitting..." : "Submit Application"}
                 </button>
+
+                {submitError && (
+                  <p className="text-sm font-medium text-rose-600">
+                    {submitError}
+                  </p>
+                )}
+
+                {submitSuccess && (
+                  <p className="text-sm font-medium text-emerald-700">
+                    {submitSuccess}
+                  </p>
+                )}
               </form>
             </div>
           </div>

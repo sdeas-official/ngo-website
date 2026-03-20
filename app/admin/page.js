@@ -9,6 +9,9 @@ const sections = [
   { key: "about", label: "About Us Page" },
   { key: "gallery", label: "Gallery Page" },
   { key: "blog", label: "Blog Page" },
+  { key: "testimonials", label: "Testimonials" },
+  { key: "responses", label: "Responses" },
+  { key: "partnerResponses", label: "Partner Requests" },
 ];
 
 const homeImageFields = [
@@ -83,6 +86,12 @@ const createEmptyBlogForm = () => ({
   tags: "",
 });
 
+const createEmptyTestimonialForm = () => ({
+  name: "",
+  image: "",
+  text: "",
+});
+
 function sanitizeDocument(data) {
   const clean = { ...data };
   delete clean.$id;
@@ -103,6 +112,12 @@ export default function AdminPanelPage() {
   const [galleryForm, setGalleryForm] = useState(createEmptyGalleryForm);
   const [blogForm, setBlogForm] = useState(createEmptyBlogForm);
   const [blogPosts, setBlogPosts] = useState([]);
+  const [testimonialForm, setTestimonialForm] = useState(
+    createEmptyTestimonialForm,
+  );
+  const [testimonials, setTestimonials] = useState([]);
+  const [contactResponses, setContactResponses] = useState([]);
+  const [partnerResponses, setPartnerResponses] = useState([]);
   const [aboutRecordIds, setAboutRecordIds] = useState([]);
   const [status, setStatus] = useState("Ready");
   const [error, setError] = useState("");
@@ -127,6 +142,33 @@ export default function AdminPanelPage() {
 
   const isCloudinaryConfigMissing =
     !cloudinaryCloudName || !cloudinaryUploadPreset;
+
+  const isResponsesSection =
+    activeSection === "responses" || activeSection === "partnerResponses";
+
+  const selectedContactResponse = useMemo(
+    () =>
+      contactResponses.find((response) => response.$id === documentId) ||
+      contactResponses[0] ||
+      null,
+    [contactResponses, documentId],
+  );
+
+  const selectedPartnerResponse = useMemo(
+    () =>
+      partnerResponses.find((response) => response.$id === documentId) ||
+      partnerResponses[0] ||
+      null,
+    [partnerResponses, documentId],
+  );
+
+  const mapTestimonialDocToForm = useCallback((data) => {
+    return {
+      name: typeof data.name === "string" ? data.name : "",
+      image: typeof data.image === "string" ? data.image : "",
+      text: typeof data.text === "string" ? data.text : "",
+    };
+  }, []);
 
   const toDateTimeLocalValue = useCallback((dateString) => {
     if (!dateString) return "";
@@ -232,8 +274,18 @@ export default function AdminPanelPage() {
         collectionId,
         [
           Query.limit(
-            activeSection === "about" || activeSection === "blog" ? 100 : 1,
+            activeSection === "about" ||
+              activeSection === "blog" ||
+              activeSection === "testimonials" ||
+              activeSection === "responses" ||
+              activeSection === "partnerResponses"
+              ? 100
+              : 1,
           ),
+          ...(activeSection === "responses" ||
+          activeSection === "partnerResponses"
+            ? [Query.orderDesc("$createdAt")]
+            : []),
         ],
       );
 
@@ -246,6 +298,10 @@ export default function AdminPanelPage() {
         setGalleryForm(createEmptyGalleryForm());
         setBlogForm(createEmptyBlogForm());
         setBlogPosts([]);
+        setTestimonialForm(createEmptyTestimonialForm());
+        setTestimonials([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
         setStatus("No document found in this collection.");
         return;
       }
@@ -308,6 +364,9 @@ export default function AdminPanelPage() {
       if (activeSection === "blog") {
         const docs = result.documents;
         setBlogPosts(docs);
+        setTestimonials([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
         const firstDoc = docs[0];
         const cleanDoc = sanitizeDocument(firstDoc);
         setDocumentId(firstDoc.$id);
@@ -318,11 +377,62 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "testimonials") {
+        const docs = result.documents;
+        setTestimonials(docs);
+        setBlogPosts([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+        const firstDoc = docs[0];
+        const cleanDoc = sanitizeDocument(firstDoc);
+        setDocumentId(firstDoc.$id);
+        setAboutRecordIds([]);
+        setEditorValue(JSON.stringify(cleanDoc, null, 2));
+        setTestimonialForm(mapTestimonialDocToForm(cleanDoc));
+        setStatus(`Loaded ${docs.length} testimonial record(s).`);
+        return;
+      }
+
+      if (activeSection === "responses") {
+        const docs = result.documents;
+        const firstDoc = docs[0];
+        setContactResponses(docs);
+        setTestimonials([]);
+        setPartnerResponses([]);
+        setBlogPosts([]);
+        setAboutRecordIds([]);
+        setDocumentId(firstDoc?.$id || "");
+        setEditorValue(
+          firstDoc ? JSON.stringify(sanitizeDocument(firstDoc), null, 2) : "{}",
+        );
+        setStatus(`Loaded ${docs.length} contact response(s).`);
+        return;
+      }
+
+      if (activeSection === "partnerResponses") {
+        const docs = result.documents;
+        const firstDoc = docs[0];
+        setPartnerResponses(docs);
+        setTestimonials([]);
+        setContactResponses([]);
+        setBlogPosts([]);
+        setAboutRecordIds([]);
+        setDocumentId(firstDoc?.$id || "");
+        setEditorValue(
+          firstDoc ? JSON.stringify(sanitizeDocument(firstDoc), null, 2) : "{}",
+        );
+        setStatus(`Loaded ${docs.length} partner request(s).`);
+        return;
+      }
+
       const doc = result.documents[0];
       const cleanDoc = sanitizeDocument(doc);
       setDocumentId(doc.$id);
       setAboutRecordIds([doc.$id]);
       setBlogPosts([]);
+      setTestimonials([]);
+      setContactResponses([]);
+      setPartnerResponses([]);
       applyLoadedData(cleanDoc);
       setStatus(`Loaded document: ${doc.$id}`);
     } catch (loadError) {
@@ -338,6 +448,7 @@ export default function AdminPanelPage() {
     config.databaseId,
     databases,
     mapBlogDocToForm,
+    mapTestimonialDocToForm,
   ]);
 
   const uploadToCloudinary = useCallback(
@@ -526,7 +637,6 @@ export default function AdminPanelPage() {
 
         const uploadedUrls = [];
         for (const file of pickedFiles) {
-          // eslint-disable-next-line no-await-in-loop
           const imageUrl = await uploadToCloudinary(file);
           uploadedUrls.push(imageUrl);
         }
@@ -615,6 +725,61 @@ export default function AdminPanelPage() {
     setBlogForm(createEmptyBlogForm());
     setEditorValue("{}");
     setStatus("Creating a new blog post.");
+    setError("");
+  }, []);
+
+  const handleTestimonialInputChange = useCallback((fieldKey, value) => {
+    setTestimonialForm((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
+
+  const handleTestimonialImageUpload = useCallback(
+    async (file) => {
+      if (!file) return;
+
+      try {
+        setError("");
+        setUploadingField("testimonial-image");
+        setStatus("Uploading testimonial image...");
+
+        const imageUrl = await uploadToCloudinary(file);
+        setTestimonialForm((prev) => ({ ...prev, image: imageUrl }));
+        setStatus("Testimonial image uploaded.");
+      } catch (uploadError) {
+        setError(uploadError?.message || "Image upload failed.");
+        setStatus("Upload failed.");
+      } finally {
+        setUploadingField("");
+      }
+    },
+    [uploadToCloudinary],
+  );
+
+  const getTestimonialPayload = useCallback(
+    () => ({
+      name: (testimonialForm.name || "").trim(),
+      image: (testimonialForm.image || "").trim(),
+      text: (testimonialForm.text || "").trim(),
+    }),
+    [testimonialForm],
+  );
+
+  const handleSelectTestimonial = useCallback(
+    (doc) => {
+      const cleanDoc = sanitizeDocument(doc);
+      setDocumentId(doc.$id);
+      setEditorValue(JSON.stringify(cleanDoc, null, 2));
+      setTestimonialForm(mapTestimonialDocToForm(cleanDoc));
+      setStatus(`Editing testimonial: ${cleanDoc.name || doc.$id}`);
+      setError("");
+    },
+    [mapTestimonialDocToForm],
+  );
+
+  const handleCreateNewTestimonial = useCallback(() => {
+    setDocumentId("");
+    setTestimonialForm(createEmptyTestimonialForm());
+    setEditorValue("{}");
+    setStatus("Creating a new testimonial record.");
     setError("");
   }, []);
 
@@ -714,6 +879,81 @@ export default function AdminPanelPage() {
             databases.deleteDocument(config.databaseId, collectionId, id),
           ),
         );
+      } else if (activeSection === "testimonials") {
+        await databases.deleteDocument(
+          config.databaseId,
+          collectionId,
+          documentId,
+        );
+
+        const remainingTestimonials = testimonials.filter(
+          (item) => item.$id !== documentId,
+        );
+        setTestimonials(remainingTestimonials);
+
+        if (remainingTestimonials.length) {
+          const nextDoc = remainingTestimonials[0];
+          const cleanDoc = sanitizeDocument(nextDoc);
+          setDocumentId(nextDoc.$id);
+          setEditorValue(JSON.stringify(cleanDoc, null, 2));
+          setTestimonialForm(mapTestimonialDocToForm(cleanDoc));
+          setStatus("Testimonial deleted. Loaded next record.");
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setTestimonialForm(createEmptyTestimonialForm());
+          setStatus("Testimonial deleted. No records remaining.");
+        }
+
+        return;
+      } else if (activeSection === "responses") {
+        await databases.deleteDocument(
+          config.databaseId,
+          collectionId,
+          documentId,
+        );
+
+        const remainingResponses = contactResponses.filter(
+          (response) => response.$id !== documentId,
+        );
+        setContactResponses(remainingResponses);
+
+        if (remainingResponses.length) {
+          const nextDoc = remainingResponses[0];
+          setDocumentId(nextDoc.$id);
+          setEditorValue(JSON.stringify(sanitizeDocument(nextDoc), null, 2));
+          setStatus("Contact response deleted. Loaded next response.");
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setStatus("Contact response deleted. No responses remaining.");
+        }
+
+        return;
+      } else if (activeSection === "partnerResponses") {
+        await databases.deleteDocument(
+          config.databaseId,
+          collectionId,
+          documentId,
+        );
+
+        const remainingPartnerResponses = partnerResponses.filter(
+          (response) => response.$id !== documentId,
+        );
+        setPartnerResponses(remainingPartnerResponses);
+
+        if (remainingPartnerResponses.length) {
+          const nextDoc = remainingPartnerResponses[0];
+          setDocumentId(nextDoc.$id);
+          setEditorValue(JSON.stringify(sanitizeDocument(nextDoc), null, 2));
+          setStatus("Partner request deleted. Loaded next request.");
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setStatus("Partner request deleted. No requests remaining.");
+        }
+
+        return;
       } else if (activeSection === "blog") {
         await databases.deleteDocument(
           config.databaseId,
@@ -757,6 +997,10 @@ export default function AdminPanelPage() {
       setGalleryForm(createEmptyGalleryForm());
       setBlogForm(createEmptyBlogForm());
       setBlogPosts([]);
+      setTestimonialForm(createEmptyTestimonialForm());
+      setTestimonials([]);
+      setContactResponses([]);
+      setPartnerResponses([]);
       setStatus(
         activeSection === "about"
           ? "All About member records deleted."
@@ -774,7 +1018,11 @@ export default function AdminPanelPage() {
     databases,
     documentId,
     blogPosts,
+    testimonials,
+    contactResponses,
+    partnerResponses,
     mapBlogDocToForm,
+    mapTestimonialDocToForm,
   ]);
 
   const handleSave = useCallback(async () => {
@@ -792,6 +1040,16 @@ export default function AdminPanelPage() {
       setIsSaving(true);
       setError("");
       setStatus("Saving changes...");
+
+      if (
+        activeSection === "responses" ||
+        activeSection === "partnerResponses"
+      ) {
+        setStatus(
+          "Responses are read-only. Use Delete Current to remove a response.",
+        );
+        return;
+      }
 
       if (activeSection === "about") {
         const aboutPayloads = getAboutPayloads();
@@ -895,6 +1153,62 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "testimonials") {
+        const testimonialPayload = getTestimonialPayload();
+
+        if (
+          !testimonialPayload.name ||
+          !testimonialPayload.image ||
+          !testimonialPayload.text
+        ) {
+          setError("Name, image, and text are required for testimonials.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (documentId && !replaceOnSave) {
+          await databases.updateDocument(
+            config.databaseId,
+            collectionId,
+            documentId,
+            testimonialPayload,
+          );
+
+          setTestimonials((prev) =>
+            prev.map((item) =>
+              item.$id === documentId
+                ? { ...item, ...testimonialPayload }
+                : item,
+            ),
+          );
+          setStatus("Testimonial updated successfully.");
+        } else {
+          if (documentId && replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+          }
+
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            testimonialPayload,
+          );
+
+          setDocumentId(created.$id);
+          setTestimonials((prev) => [
+            created,
+            ...prev.filter((item) => item.$id !== documentId),
+          ]);
+          setStatus("New testimonial created successfully.");
+        }
+
+        return;
+      }
+
       const parsed =
         activeSection === "home"
           ? homeForm
@@ -957,6 +1271,7 @@ export default function AdminPanelPage() {
     getAboutPayloads,
     getGalleryPayload,
     getBlogPayload,
+    getTestimonialPayload,
     aboutRecordIds,
     replaceOnSave,
   ]);
@@ -994,6 +1309,10 @@ export default function AdminPanelPage() {
                   setGalleryForm(createEmptyGalleryForm());
                   setBlogForm(createEmptyBlogForm());
                   setBlogPosts([]);
+                  setTestimonialForm(createEmptyTestimonialForm());
+                  setTestimonials([]);
+                  setContactResponses([]);
+                  setPartnerResponses([]);
                   setAboutRecordIds([]);
                   setDocumentId("");
                   setReplaceOnSave(false);
@@ -1033,23 +1352,27 @@ export default function AdminPanelPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <label className="inline-flex h-10 items-center gap-2 rounded-full border border-[#dfe8df] bg-[#f7fbf8] px-3.5 text-xs font-semibold text-[#4f596e]">
-                <input
-                  type="checkbox"
-                  checked={replaceOnSave}
-                  onChange={(event) => setReplaceOnSave(event.target.checked)}
-                  className="h-4 w-4 accent-[#63c37a]"
-                />
-                Replace existing on save
-              </label>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={isSaving || isConfigMissing}
-                className="inline-flex h-10 items-center justify-center rounded-full bg-[#63c37a] px-6 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(99,195,122,0.32)] transition-all hover:-translate-y-px hover:bg-[#459557] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isSaving ? "Saving..." : "Save"}
-              </button>
+              {!isResponsesSection && (
+                <label className="inline-flex h-10 items-center gap-2 rounded-full border border-[#dfe8df] bg-[#f7fbf8] px-3.5 text-xs font-semibold text-[#4f596e]">
+                  <input
+                    type="checkbox"
+                    checked={replaceOnSave}
+                    onChange={(event) => setReplaceOnSave(event.target.checked)}
+                    className="h-4 w-4 accent-[#63c37a]"
+                  />
+                  Replace existing on save
+                </label>
+              )}
+              {!isResponsesSection && (
+                <button
+                  type="button"
+                  onClick={handleSave}
+                  disabled={isSaving || isConfigMissing}
+                  className="inline-flex h-10 items-center justify-center rounded-full bg-[#63c37a] px-6 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(99,195,122,0.32)] transition-all hover:-translate-y-px hover:bg-[#459557] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {isSaving ? "Saving..." : "Save"}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleDeleteCurrent}
@@ -1078,7 +1401,8 @@ export default function AdminPanelPage() {
           {(activeSection === "home" ||
             activeSection === "about" ||
             activeSection === "gallery" ||
-            activeSection === "blog") &&
+            activeSection === "blog" ||
+            activeSection === "testimonials") &&
             isCloudinaryConfigMissing && (
               <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 Cloudinary config is incomplete. Add
@@ -1688,6 +2012,422 @@ export default function AdminPanelPage() {
                       spellCheck={false}
                     />
                   </div>
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "testimonials" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Testimonials Manager
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCreateNewTestimonial}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#63c37a] bg-white px-5 text-sm font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white"
+                >
+                  + Create New Testimonial
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1d2238]">
+                      Existing Testimonials
+                    </p>
+                    <span className="rounded-full border border-[#dfe8df] bg-white px-2.5 py-1 text-xs font-semibold text-[#5f6879]">
+                      {testimonials.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {testimonials.length ? (
+                      testimonials.map((item) => {
+                        const isActive = item.$id === documentId;
+                        const testimonialName =
+                          typeof item.name === "string" && item.name.trim()
+                            ? item.name
+                            : "Unnamed";
+
+                        return (
+                          <button
+                            key={item.$id}
+                            type="button"
+                            onClick={() => handleSelectTestimonial(item)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-1 text-sm font-semibold text-[#1d2238]">
+                              {testimonialName}
+                            </p>
+                            <p className="mt-1 line-clamp-1 text-xs text-[#5f6879]">
+                              {item.text || "No testimonial text"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No testimonials yet. Create your first one.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      value={testimonialForm.name}
+                      onChange={(event) =>
+                        handleTestimonialInputChange("name", event.target.value)
+                      }
+                      placeholder="Provider name"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={testimonialForm.image}
+                      onChange={(event) =>
+                        handleTestimonialInputChange(
+                          "image",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-[#63c37a] bg-white px-4 text-xs font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) =>
+                            handleTestimonialImageUpload(
+                              event.target.files?.[0],
+                            )
+                          }
+                        />
+                        {uploadingField === "testimonial-image"
+                          ? "Uploading..."
+                          : "Upload image"}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleTestimonialInputChange("image", "")
+                        }
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {testimonialForm.image && (
+                      <img
+                        src={testimonialForm.image}
+                        alt="Testimonial"
+                        className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-[#0000000f]"
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Testimonial Text
+                    </label>
+                    <textarea
+                      value={testimonialForm.text}
+                      onChange={(event) =>
+                        handleTestimonialInputChange("text", event.target.value)
+                      }
+                      placeholder="What they said about the foundation..."
+                      className="min-h-40 w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                      spellCheck={false}
+                    />
+                  </div>
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "responses" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Contact Us Requests
+                </h3>
+                <span className="rounded-full border border-[#dfe8df] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6879]">
+                  {contactResponses.length} response(s)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <p className="mb-3 text-sm font-semibold text-[#1d2238]">
+                    Incoming Requests
+                  </p>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {contactResponses.length ? (
+                      contactResponses.map((response, index) => {
+                        const isActive = response.$id === documentId;
+                        const fullName =
+                          typeof response.fullName === "string"
+                            ? response.fullName
+                            : typeof response.name === "string"
+                              ? response.name
+                              : "Unknown";
+
+                        return (
+                          <button
+                            key={response.$id}
+                            type="button"
+                            onClick={() => {
+                              setDocumentId(response.$id);
+                              setStatus(
+                                `Viewing contact response ${index + 1} of ${contactResponses.length}.`,
+                              );
+                            }}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-1 text-sm font-semibold text-[#1d2238]">
+                              {fullName}
+                            </p>
+                            <p className="mt-1 line-clamp-1 text-xs text-[#5f6879]">
+                              {response.subject || "No subject"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No contact requests yet.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  {selectedContactResponse ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Full Name
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#1d2238]">
+                            {selectedContactResponse.fullName ||
+                              selectedContactResponse.name ||
+                              "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Email
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedContactResponse.email || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Phone Number
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedContactResponse.phoneNo ||
+                              selectedContactResponse.phone ||
+                              "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Received At
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedContactResponse.$createdAt
+                              ? new Date(
+                                  selectedContactResponse.$createdAt,
+                                ).toLocaleString()
+                              : "-"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                          Subject
+                        </p>
+                        <p className="mt-1 text-sm font-medium text-[#1d2238]">
+                          {selectedContactResponse.subject || "-"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                          Message
+                        </p>
+                        <p className="mt-2 rounded-2xl border border-[#dbe3e7] bg-white px-4 py-3 text-sm leading-relaxed text-[#1d2238]">
+                          {selectedContactResponse.message || "-"}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                      Select a response to view details.
+                    </div>
+                  )}
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "partnerResponses" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Partner With Us Requests
+                </h3>
+                <span className="rounded-full border border-[#dfe8df] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6879]">
+                  {partnerResponses.length} request(s)
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <p className="mb-3 text-sm font-semibold text-[#1d2238]">
+                    Incoming Requests
+                  </p>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {partnerResponses.length ? (
+                      partnerResponses.map((response, index) => {
+                        const isActive = response.$id === documentId;
+                        const fullName =
+                          typeof response.name === "string"
+                            ? response.name
+                            : "Unknown";
+
+                        return (
+                          <button
+                            key={response.$id}
+                            type="button"
+                            onClick={() => {
+                              setDocumentId(response.$id);
+                              setStatus(
+                                `Viewing partner request ${index + 1} of ${partnerResponses.length}.`,
+                              );
+                            }}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-1 text-sm font-semibold text-[#1d2238]">
+                              {fullName}
+                            </p>
+                            <p className="mt-1 line-clamp-1 text-xs text-[#5f6879]">
+                              {response.location || "No location"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No partner requests yet.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  {selectedPartnerResponse ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Full Name
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#1d2238]">
+                            {selectedPartnerResponse.name || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Email
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedPartnerResponse.email || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Phone Number
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedPartnerResponse.phoneNo || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Location
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedPartnerResponse.location || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Availability
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedPartnerResponse.availability || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Received At
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedPartnerResponse.$createdAt
+                              ? new Date(
+                                  selectedPartnerResponse.$createdAt,
+                                ).toLocaleString()
+                              : "-"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                          Skills & Expertise
+                        </p>
+                        <p className="mt-2 rounded-2xl border border-[#dbe3e7] bg-white px-4 py-3 text-sm leading-relaxed text-[#1d2238]">
+                          {selectedPartnerResponse.skills || "-"}
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                      Select a request to view details.
+                    </div>
+                  )}
                 </section>
               </div>
             </div>

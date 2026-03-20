@@ -1,15 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { Query } from "appwrite";
 import OngoingProjectsCarousel from "./components/OngoingProjectsCarousel";
 import LatestArticlesSection from "./components/LatestArticlesSection";
 import GetInTouchSection from "./components/GetInTouchSection";
 import FooterSection from "./components/FooterSection";
 import { TextHighlight } from "./components/TextHighlight";
 import Navbar from "./components/Navbar";
+import { createDatabasesClient } from "../lib/appwriteClient";
 
 export default function Home() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
   const [activeProgramCard, setActiveProgramCard] = useState(0);
 
   const programCards = [
@@ -29,6 +32,65 @@ export default function Home() {
       alt: "Youth empowerment workshops",
     },
   ];
+
+  const fallbackTestimonials = [
+    {
+      name: "Ritika Das",
+      image:
+        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80",
+      text: "SDEAS has created visible change in the communities we support. Their team is transparent, committed, and deeply impact-focused.",
+    },
+    {
+      name: "Prakash Kumar",
+      image:
+        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=500&q=80",
+      text: "My son gained confidence and practical skills through SDEAS training. Today, he has a stable job and supports our family.",
+    },
+    {
+      name: "Ananya Sahu",
+      image:
+        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=500&q=80",
+      text: "Working with SDEAS is meaningful. Every batch of youth we mentor carries new hope, capability, and confidence into their future.",
+    },
+  ];
+
+  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
+
+  useEffect(() => {
+    const loadTestimonials = async () => {
+      if (
+        !databases ||
+        !config.databaseId ||
+        !config.collections.testimonials
+      ) {
+        return;
+      }
+
+      try {
+        const result = await databases.listDocuments(
+          config.databaseId,
+          config.collections.testimonials,
+          [Query.orderDesc("$createdAt"), Query.limit(100)],
+        );
+
+        const mapped = result.documents
+          .map((doc) => ({
+            name: typeof doc.name === "string" ? doc.name : "",
+            image: typeof doc.image === "string" ? doc.image : "",
+            text: typeof doc.text === "string" ? doc.text : "",
+          }))
+          .filter((item) => item.name && item.image && item.text);
+
+        if (mapped.length) {
+          setTestimonials(mapped);
+        }
+      } catch {
+        // keep fallback testimonials
+      }
+    };
+
+    loadTestimonials();
+  }, [config.collections.testimonials, config.databaseId, databases]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -237,6 +299,54 @@ export default function Home() {
       </section>
 
       <OngoingProjectsCarousel />
+
+      <section className="bg-[#f7fdf8] py-14 md:py-24">
+        <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
+          <div className="text-center">
+            <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
+              Testimonials
+            </p>
+            <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#1d2238] md:text-6xl">
+              Voices of Impact
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
+              Hear what our partners, families, and volunteers say about the
+              change we create together.
+            </p>
+          </div>
+
+          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+            {testimonials.map((testimonial) => (
+              <article
+                key={testimonial.name}
+                className="rounded-3xl border border-[#63c37a1f] bg-white p-6 shadow-[0_10px_28px_rgba(17,24,39,0.08)]"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="relative h-14 w-14 overflow-hidden rounded-full ring-2 ring-[#63c37a33]">
+                    <Image
+                      src={testimonial.image}
+                      alt={testimonial.name}
+                      fill
+                      className="object-cover"
+                      sizes="56px"
+                    />
+                  </div>
+
+                  <div>
+                    <h3 className="text-base font-bold text-[#1d2238]">
+                      {testimonial.name}
+                    </h3>
+                  </div>
+                </div>
+
+                <p className="mt-5 text-base leading-relaxed text-[#445066]">
+                  “{testimonial.text}”
+                </p>
+              </article>
+            ))}
+          </div>
+        </div>
+      </section>
 
       <section className="bg-white py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-10 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">

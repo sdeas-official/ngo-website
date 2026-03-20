@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { ID } from "appwrite";
 import {
   MapPin,
   Mail,
@@ -12,8 +13,11 @@ import {
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
+import { createDatabasesClient } from "../../lib/appwriteClient";
 
 export default function Contact() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -21,17 +25,60 @@ export default function Contact() {
     subject: "",
     message: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [submitSuccess, setSubmitSuccess] = useState("");
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    alert("Thank you for your message! We will get back to you soon.");
-    setFormData({
-      name: "",
-      email: "",
-      phone: "",
-      subject: "",
-      message: "",
-    });
+
+    if (!databases || !config.databaseId || !config.collections.responses) {
+      setSubmitSuccess("");
+      setSubmitError(
+        "Contact form is not configured yet. Add NEXT_PUBLIC_APPWRITE_COLLECTION_CONTACT_ID in your .env.",
+      );
+      return;
+    }
+
+    const digitsOnlyPhone = (formData.phone || "").replace(/\D/g, "");
+    if (!/^\d{10,12}$/.test(digitsOnlyPhone)) {
+      setSubmitSuccess("");
+      setSubmitError("Phone number must contain 10 to 12 digits.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setSubmitError("");
+      setSubmitSuccess("");
+
+      await databases.createDocument(
+        config.databaseId,
+        config.collections.responses,
+        ID.unique(),
+        {
+          fullName: formData.name.trim(),
+          email: formData.email.trim(),
+          phoneNo: Number(digitsOnlyPhone),
+          subject: formData.subject.trim(),
+          message: formData.message.trim(),
+        },
+      );
+
+      setFormData({
+        name: "",
+        email: "",
+        phone: "",
+        subject: "",
+        message: "",
+      });
+      setSubmitSuccess("Thank you! Your response has been submitted.");
+    } catch (error) {
+      setSubmitError(error?.message || "Failed to submit your response.");
+      setSubmitSuccess("");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -217,12 +264,17 @@ export default function Contact() {
                     </label>
                     <input
                       type="tel"
+                      required
                       value={formData.phone}
                       onChange={(e) =>
-                        setFormData({ ...formData, phone: e.target.value })
+                        setFormData({
+                          ...formData,
+                          phone: e.target.value.replace(/\D/g, "").slice(0, 12),
+                        })
                       }
+                      pattern="[0-9]{10,12}"
                       className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
-                      placeholder="+91 XXXXX XXXXX"
+                      placeholder="10 to 12 digit number"
                     />
                   </div>
                   <div>
@@ -266,11 +318,24 @@ export default function Contact() {
                 <div className="flex justify-center sm:justify-start">
                   <button
                     type="submit"
+                    disabled={isSubmitting}
                     className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557]"
                   >
-                    Send Message
+                    {isSubmitting ? "Sending..." : "Send Message"}
                   </button>
                 </div>
+
+                {submitError && (
+                  <p className="text-sm font-medium text-rose-600">
+                    {submitError}
+                  </p>
+                )}
+
+                {submitSuccess && (
+                  <p className="text-sm font-medium text-emerald-700">
+                    {submitSuccess}
+                  </p>
+                )}
               </form>
             </div>
           </div>
