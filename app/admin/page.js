@@ -186,6 +186,7 @@ export default function AdminPanelPage() {
 
   const isResponsesSection =
     activeSection === "responses" || activeSection === "partnerResponses";
+  const showDeleteAction = false;
 
   const selectedContactResponse = useMemo(
     () =>
@@ -1620,21 +1621,23 @@ export default function AdminPanelPage() {
                   {isSaving ? "Saving..." : "Save"}
                 </button>
               )}
-              <button
-                type="button"
-                onClick={handleDeleteCurrent}
-                disabled={
-                  (activeSection === "about"
-                    ? !aboutRecordIds.length
-                    : !documentId) ||
-                  isLoading ||
-                  isSaving ||
-                  isConfigMissing
-                }
-                className="inline-flex h-10 items-center justify-center rounded-full border border-rose-300 bg-white px-5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                Delete Current
-              </button>
+              {showDeleteAction && (
+                <button
+                  type="button"
+                  onClick={handleDeleteCurrent}
+                  disabled={
+                    (activeSection === "about"
+                      ? !aboutRecordIds.length
+                      : !documentId) ||
+                    isLoading ||
+                    isSaving ||
+                    isConfigMissing
+                  }
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-rose-300 bg-white px-5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Delete Current
+                </button>
+              )}
             </div>
           </div>
 
