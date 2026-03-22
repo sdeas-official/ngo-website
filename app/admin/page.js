@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ID, Query } from "appwrite";
+import { useRouter } from "next/navigation";
 import { createDatabasesClient } from "../../lib/appwriteClient";
 
 const sections = [
@@ -143,6 +144,7 @@ function extractYouTubeVideoId(url) {
 }
 
 export default function AdminPanelPage() {
+  const router = useRouter();
   const [activeSection, setActiveSection] = useState("home");
   const [documentId, setDocumentId] = useState("");
   const [editorValue, setEditorValue] = useState("{}");
@@ -166,6 +168,7 @@ export default function AdminPanelPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [uploadingField, setUploadingField] = useState("");
   const [replaceOnSave, setReplaceOnSave] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
 
@@ -1528,6 +1531,19 @@ export default function AdminPanelPage() {
     }
   }, [handleLoad, isConfigMissing]);
 
+  const handleLogout = useCallback(async () => {
+    setIsLoggingOut(true);
+    try {
+      await fetch("/api/admin-auth/logout", {
+        method: "POST",
+      });
+    } finally {
+      router.replace("/admin-login");
+      router.refresh();
+      setIsLoggingOut(false);
+    }
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-linear-to-b from-[#f3faf5] via-[#f8faf8] to-[#edf3ef] text-[#1d2238]">
       <div className="mx-auto flex w-full max-w-350 flex-col px-4 py-6 md:px-8 lg:flex-row lg:gap-6 lg:px-10">
@@ -1600,6 +1616,14 @@ export default function AdminPanelPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-[#d6dfd7] bg-white px-5 text-sm font-semibold text-[#4f596e] transition-colors hover:bg-[#f5f8f5] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isLoggingOut ? "Signing out..." : "Logout"}
+              </button>
               {!isResponsesSection && (
                 <label className="inline-flex h-10 items-center gap-2 rounded-full border border-[#dfe8df] bg-[#f7fbf8] px-3.5 text-xs font-semibold text-[#4f596e]">
                   <input
