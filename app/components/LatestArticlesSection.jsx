@@ -77,7 +77,7 @@ export default function LatestArticlesSection() {
                 </p>
 
                 <a
-                  href="/programs"
+                  href="/partner-with-us"
                   className="mt-5 inline-flex text-base font-semibold text-[#63c37a] transition-colors hover:text-[#4fb267] md:text-lg"
                 >
                   Read Update →

@@ -213,7 +213,7 @@ export default function Home() {
 
             <div className="mt-8 flex justify-center md:block md:mt-10">
               <a
-                href="#"
+                href="/partner-with-us"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white transition-colors hover:bg-[#459557] md:h-14 md:px-10 md:text-lg"
               >
                 DONATE NOW
@@ -279,7 +279,7 @@ export default function Home() {
                     {card.title}
                   </h3>
                   <a
-                    href="#"
+                    href="/programs"
                     className={`mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/35 px-5 py-2 text-sm font-semibold tracking-[0.12em] text-white transition-all duration-300 ${
                       isActive
                         ? "bg-white/15 hover:bg-white hover:text-[#0f172a]"
@@ -313,7 +313,7 @@ export default function Home() {
             </p>
 
             <a
-              href="#"
+              href="/about"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
@@ -388,7 +388,7 @@ export default function Home() {
             </p>
 
             <a
-              href="#"
+              href="/about"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
@@ -467,7 +467,7 @@ export default function Home() {
             </p>
 
             <a
-              href="#"
+              href="/partner-with-us"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               PARTNER NOW
@@ -484,7 +484,7 @@ export default function Home() {
             />
 
             <a
-              href="#"
+              href="/partner-with-us"
               aria-label="Partner with SDEAS Welfare Foundation"
               className="absolute left-1/2 top-1/2 inline-flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#63c37a] text-3xl text-white shadow-lg transition-colors hover:bg-[#459557] md:h-28 md:w-28 md:text-5xl"
             >

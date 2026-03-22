@@ -104,8 +104,8 @@ export default function Navbar() {
         </button>
 
         <div className="hidden items-center justify-end pl-3 md:pl-8 xl:flex">
-          <a
-            href="#"
+          <Link
+            href="/partner-with-us"
             className={`inline-flex h-11 items-center justify-center gap-1.5 rounded-sm border border-[#63c37a] px-4 text-sm font-semibold transition-colors md:h-14 md:gap-2 md:px-8 md:text-lg ${
               isScrolled
                 ? "bg-[#63c37a] text-[#ffffff] hover:bg-transparent hover:text-[#63c37a]"
@@ -114,7 +114,7 @@ export default function Navbar() {
           >
             <span className="text-sm">❤</span>
             Donate
-          </a>
+          </Link>
         </div>
       </nav>
 

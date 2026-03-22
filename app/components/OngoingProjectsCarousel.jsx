@@ -85,7 +85,7 @@ export default function OngoingProjectsCarousel() {
               {current.title}
             </h3>
             <a
-              href="#"
+              href="/programs"
               className="mt-5 inline-flex h-11 items-center justify-center rounded-full bg-[#63c37a] px-6 text-sm font-bold text-white transition-colors hover:bg-[#459557] md:mt-6 md:h-12 md:px-8 md:text-base"
             >
               SUPPORT NOW
