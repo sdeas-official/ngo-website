@@ -83,16 +83,7 @@ export default function Home() {
   ];
 
   const [testimonials, setTestimonials] = useState(fallbackTestimonials);
-  const [slidesPerView, setSlidesPerView] = useState(1);
-  const [testimonialSlide, setTestimonialSlide] = useState(0);
-  const [isSlideTransitionEnabled, setIsSlideTransitionEnabled] =
-    useState(true);
-
-  const shouldUseTestimonialSlider = testimonials.length > 3;
-
-  const sliderTestimonials = shouldUseTestimonialSlider
-    ? [...testimonials, ...testimonials.slice(0, slidesPerView)]
-    : testimonials;
+  const shouldUseTestimonialInfiniteScroll = testimonials.length > 3;
 
   useEffect(() => {
     const loadTestimonials = async () => {
@@ -129,41 +120,6 @@ export default function Home() {
 
     loadTestimonials();
   }, [config.collections.testimonials, config.databaseId, databases]);
-
-  useEffect(() => {
-    const updateSlidesPerView = () => {
-      if (window.innerWidth >= 1280) {
-        setSlidesPerView(3);
-      } else if (window.innerWidth >= 768) {
-        setSlidesPerView(2);
-      } else {
-        setSlidesPerView(1);
-      }
-    };
-
-    updateSlidesPerView();
-    window.addEventListener("resize", updateSlidesPerView);
-
-    return () => {
-      window.removeEventListener("resize", updateSlidesPerView);
-    };
-  }, []);
-
-  useEffect(() => {
-    setTestimonialSlide(0);
-  }, [slidesPerView, testimonials.length]);
-
-  useEffect(() => {
-    if (!shouldUseTestimonialSlider) return;
-
-    const interval = setInterval(() => {
-      setTestimonialSlide((prev) => prev + 1);
-    }, 4500);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [shouldUseTestimonialSlider]);
 
   const renderTestimonialCard = (testimonial, index) => {
     const youtubeId = extractYouTubeVideoId(testimonial.image);
@@ -423,39 +379,30 @@ export default function Home() {
             </p>
           </div>
 
-          {shouldUseTestimonialSlider ? (
-            <div className="mt-10 overflow-hidden">
-              <div
-                className="flex gap-5"
-                style={{
-                  transform: `translateX(-${(testimonialSlide * 100) / slidesPerView}%)`,
-                  transition: isSlideTransitionEnabled
-                    ? "transform 650ms ease"
-                    : "none",
-                }}
-                onTransitionEnd={() => {
-                  if (testimonialSlide === testimonials.length) {
-                    setIsSlideTransitionEnabled(false);
-                    setTestimonialSlide(0);
-                    requestAnimationFrame(() => {
-                      requestAnimationFrame(() => {
-                        setIsSlideTransitionEnabled(true);
-                      });
-                    });
-                  }
-                }}
-              >
-                {sliderTestimonials.map((testimonial, index) => (
-                  <div
-                    key={`${testimonial.name}-slide-${index}`}
-                    className="shrink-0"
-                    style={{
-                      width: `calc(${100 / slidesPerView}% - ${(20 * (slidesPerView - 1)) / slidesPerView}px)`,
-                    }}
-                  >
-                    {renderTestimonialCard(testimonial, index)}
-                  </div>
-                ))}
+          {shouldUseTestimonialInfiniteScroll ? (
+            <div className="mask-[linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] mt-10 overflow-hidden">
+              <div className="flex w-max animate-[testimonial-scroll_34s_linear_infinite] hover:[animation-play-state:paused]">
+                <div className="flex shrink-0 gap-5 pr-5">
+                  {testimonials.map((testimonial, index) => (
+                    <div
+                      key={`${testimonial.name}-track-a-${index}`}
+                      className="w-[84vw] max-w-110 shrink-0 sm:w-[72vw] md:w-[44vw] xl:w-[31vw]"
+                    >
+                      {renderTestimonialCard(testimonial, index)}
+                    </div>
+                  ))}
+                </div>
+
+                <div className="flex shrink-0 gap-5 pr-5" aria-hidden="true">
+                  {testimonials.map((testimonial, index) => (
+                    <div
+                      key={`${testimonial.name}-track-b-${index}`}
+                      className="w-[84vw] max-w-110 shrink-0 sm:w-[72vw] md:w-[44vw] xl:w-[31vw]"
+                    >
+                      {renderTestimonialCard(testimonial, index)}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
@@ -517,6 +464,17 @@ export default function Home() {
       <GetInTouchSection />
 
       <FooterSection />
+
+      <style jsx>{`
+        @keyframes testimonial-scroll {
+          from {
+            transform: translateX(0);
+          }
+          to {
+            transform: translateX(-50%);
+          }
+        }
+      `}</style>
     </div>
   );
 }

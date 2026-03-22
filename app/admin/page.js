@@ -145,6 +145,8 @@ function extractYouTubeVideoId(url) {
 
 export default function AdminPanelPage() {
   const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [documentId, setDocumentId] = useState("");
   const [editorValue, setEditorValue] = useState("{}");
@@ -1526,10 +1528,48 @@ export default function AdminPanelPage() {
   ]);
 
   useEffect(() => {
-    if (!isConfigMissing) {
+    let isMounted = true;
+
+    const verifySession = async () => {
+      try {
+        const response = await fetch("/api/admin-auth/session", {
+          method: "GET",
+          cache: "no-store",
+        });
+        const data = await response.json().catch(() => ({}));
+
+        if (!isMounted) return;
+
+        if (response.ok && data?.authenticated) {
+          setIsAuthorized(true);
+          return;
+        }
+
+        setIsAuthorized(false);
+        router.replace("/admin-login?next=/admin");
+      } catch {
+        if (!isMounted) return;
+        setIsAuthorized(false);
+        router.replace("/admin-login?next=/admin");
+      } finally {
+        if (isMounted) {
+          setIsCheckingAuth(false);
+        }
+      }
+    };
+
+    verifySession();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [router]);
+
+  useEffect(() => {
+    if (isAuthorized && !isConfigMissing) {
       handleLoad();
     }
-  }, [handleLoad, isConfigMissing]);
+  }, [handleLoad, isAuthorized, isConfigMissing]);
 
   const handleLogout = useCallback(async () => {
     setIsLoggingOut(true);
@@ -1543,6 +1583,22 @@ export default function AdminPanelPage() {
       setIsLoggingOut(false);
     }
   }, [router]);
+
+  if (isCheckingAuth) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-[#f3faf5] via-[#f8faf8] to-[#edf3ef] px-4 py-10">
+        <div className="w-full max-w-md rounded-3xl border border-[#63c37a2b] bg-white/95 p-6 text-center shadow-[0_20px_44px_rgba(17,24,39,0.12)]">
+          <p className="text-sm font-medium text-[#5f6879]">
+            Checking authorization...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthorized) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-linear-to-b from-[#f3faf5] via-[#f8faf8] to-[#edf3ef] text-[#1d2238]">

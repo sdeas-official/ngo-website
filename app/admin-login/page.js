@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function AdminLoginPage() {
+function AdminLoginContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const nextPath = searchParams.get("next") || "/admin";
+  const nextParam = searchParams.get("next");
+  const nextPath =
+    nextParam && nextParam.startsWith("/") ? nextParam : "/admin";
 
   const [form, setForm] = useState({ id: "", password: "" });
   const [error, setError] = useState("");
@@ -111,5 +113,23 @@ export default function AdminLoginPage() {
         </form>
       </section>
     </main>
+  );
+}
+
+function AdminLoginFallback() {
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-linear-to-b from-[#f3faf5] via-[#f8faf8] to-[#edf3ef] px-4 py-10">
+      <section className="w-full max-w-md rounded-3xl border border-[#63c37a2b] bg-white/95 p-7 text-center shadow-[0_20px_44px_rgba(17,24,39,0.12)]">
+        <p className="text-sm font-medium text-[#5f6879]">Loading login...</p>
+      </section>
+    </main>
+  );
+}
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense fallback={<AdminLoginFallback />}>
+      <AdminLoginContent />
+    </Suspense>
   );
 }
