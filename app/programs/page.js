@@ -32,8 +32,8 @@ const programSectionsFallback = [
       "Job placement assistance and career guidance",
     ],
     cta: {
-      label: "Enroll Now",
-      to: "/contact",
+      label: "Contact",
+      to: "/partner-with-us",
     },
     sectionClassName: "",
     reverse: false,
@@ -53,8 +53,8 @@ const programSectionsFallback = [
       "Partnership with healthcare professionals and volunteers",
     ],
     cta: {
-      label: "Request a Health Camp",
-      to: "/contact",
+      label: "Contact",
+      to: "/partner-with-us",
     },
     sectionClassName: "bg-[#f7fdf8]",
     reverse: true,
@@ -74,8 +74,8 @@ const programSectionsFallback = [
       "Long-term engagement with measurable social outcomes",
     ],
     cta: {
-      label: "Support Our Work",
-      to: "/get-involved",
+      label: "Contact",
+      to: "/partner-with-us",
     },
     sectionClassName: "",
     reverse: false,
@@ -145,8 +145,8 @@ export default function Programs() {
               icon: icons[index % icons.length],
               points,
               cta: {
-                label: "Learn More",
-                to: "/contact",
+                label: "Contact",
+                to: "/partner-with-us",
               },
               sectionClassName: index % 2 === 1 ? "bg-[#f7fdf8]" : "",
               reverse: index % 2 === 1,
@@ -246,8 +246,8 @@ export default function Programs() {
                     {program.desc}
                   </p>
                   <div className="mt-6 flex justify-center">
-                    <Button to="/contact" size="sm">
-                      Learn More →
+                    <Button to="/partner-with-us" size="sm">
+                      Contact →
                     </Button>
                   </div>
                 </div>

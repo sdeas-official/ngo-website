@@ -102,7 +102,7 @@ export default function ProgramCardsSection() {
                 </p>
 
                 <a
-                  href="#"
+                  href="/programs"
                   className="mt-1 inline-flex w-fit items-center gap-2 text-sm font-semibold text-[#63c37a] transition-all duration-300 hover:gap-3 hover:text-white"
                 >
                   Learn More

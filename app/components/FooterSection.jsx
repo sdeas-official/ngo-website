@@ -1,18 +1,19 @@
 import Image from "next/image";
 
 const causes = [
-  "Skill Development Training",
-  "Youth Empowerment Workshops",
-  "CSR Community Projects",
+  { label: "Skill Development Training", href: "/programs" },
+  { label: "Youth Empowerment Workshops", href: "/programs" },
+  { label: "CSR Community Projects", href: "/partner-with-us" },
 ];
 
 const navLinks = [
-  "Gallery",
-  "Events",
-  "CSR Projects",
-  "Partner With Us",
-  "Donate",
-  "About Us",
+  { label: "Home", href: "/" },
+  { label: "About Us", href: "/about" },
+  { label: "Programs", href: "/programs" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Blog", href: "/blog" },
+  { label: "Partner With Us", href: "/partner-with-us" },
+  { label: "Contact", href: "/contact" },
 ];
 
 export default function FooterSection() {
@@ -22,7 +23,7 @@ export default function FooterSection() {
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-14">
           <div>
             <a
-              href="#"
+              href="/"
               className="inline-flex items-center gap-3"
               aria-label="SDEAS Welfare Foundation"
             >
@@ -80,7 +81,15 @@ export default function FooterSection() {
             <div className="mt-8 space-y-4 text-base leading-normal text-white md:text-lg">
               <p>Rourkela, Odisha, India</p>
               <p>9348629818</p>
-              <p>Email: (Add official email)</p>
+              <p>
+                Email:{" "}
+                <a
+                  href="mailto:info@sdeasfoundation.org"
+                  className="transition-colors hover:text-[#63c37a]"
+                >
+                  info@sdeasfoundation.org
+                </a>
+              </p>
             </div>
           </div>
 
@@ -91,12 +100,12 @@ export default function FooterSection() {
 
             <ul className="mt-8 space-y-3 text-base leading-relaxed text-white md:text-lg">
               {navLinks.map((item) => (
-                <li key={item}>
+                <li key={item.label}>
                   <a
-                    href="#"
+                    href={item.href}
                     className="transition-colors hover:text-[#63c37a]"
                   >
-                    {item}
+                    {item.label}
                   </a>
                 </li>
               ))}
@@ -110,12 +119,12 @@ export default function FooterSection() {
 
             <ul className="mt-8 divide-y divide-white/10">
               {causes.map((cause) => (
-                <li key={cause} className="py-5 first:pt-0 last:pb-0">
+                <li key={cause.label} className="py-5 first:pt-0 last:pb-0">
                   <a
-                    href="#"
+                    href={cause.href}
                     className="block text-base leading-relaxed font-semibold text-white transition-colors hover:text-[#63c37a] md:text-lg"
                   >
-                    {cause}
+                    {cause.label}
                   </a>
                   <p className="mt-1 text-sm text-[#9da6b5] md:text-base">
                     Raised: 0 of 0

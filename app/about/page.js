@@ -157,20 +157,6 @@ export default function About() {
                 Transforming lives through skill development, education, and
                 community empowerment across India.
               </p>
-              <div className="mt-10 flex flex-wrap gap-4">
-                <a
-                  href="#our-story"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold tracking-wide text-white transition-colors hover:bg-[#459557] md:h-14 md:px-10 md:text-lg"
-                >
-                  Our Story ↓
-                </a>
-                <a
-                  href="#"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/40 px-8 text-base font-bold tracking-wide text-white transition-colors hover:border-[#63c37a] hover:text-[#63c37a] md:h-14 md:px-10 md:text-lg"
-                >
-                  ❤ Donate
-                </a>
-              </div>
             </div>
           </div>
         </div>
@@ -300,12 +286,6 @@ export default function About() {
               and livelihood opportunities that transform lives and contribute
               to nation-building.
             </p>
-            <a
-              href="#"
-              className="mt-10 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
-            >
-              JOIN US
-            </a>
           </div>
 
           <div className="relative h-80 overflow-hidden rounded-3xl sm:h-96 md:h-105">
@@ -384,12 +364,6 @@ export default function About() {
               We envision an India where empowered communities drive economic
               growth and social progress, with no one left behind.
             </p>
-            <a
-              href="#"
-              className="mt-10 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
-            >
-              LEARN MORE
-            </a>
           </div>
         </div>
       </section>
