@@ -5,8 +5,7 @@ const latestArticles = [
     title: "Youth Skill Development Workshop Successfully Conducted",
     excerpt:
       "Hands-on sessions helped students gain practical knowledge for career readiness and employment opportunities.",
-    image:
-      "https://images.unsplash.com/photo-1517739277509-06f1c761b6a9?auto=format&fit=crop&w=1200&q=80",
+    image: "/flag2.jpeg",
   },
   {
     author: "SDEAS Foundation",
@@ -78,7 +77,7 @@ export default function LatestArticlesSection() {
                 </p>
 
                 <a
-                  href="#"
+                  href="/programs"
                   className="mt-5 inline-flex text-base font-semibold text-[#63c37a] transition-colors hover:text-[#4fb267] md:text-lg"
                 >
                   Read Update →
