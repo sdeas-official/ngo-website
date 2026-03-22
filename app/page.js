@@ -9,6 +9,7 @@ import GetInTouchSection from "./components/GetInTouchSection";
 import FooterSection from "./components/FooterSection";
 import { TextHighlight } from "./components/TextHighlight";
 import Navbar from "./components/Navbar";
+import ProgramCardsSection from "./components/ProgramCardsSection";
 import { createDatabasesClient } from "../lib/appwriteClient";
 
 function extractYouTubeVideoId(url) {
@@ -44,26 +45,6 @@ function extractYouTubeVideoId(url) {
 
 export default function Home() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
-  const [activeProgramCard, setActiveProgramCard] = useState(0);
-  const [activeTestimonialVideo, setActiveTestimonialVideo] = useState(null);
-
-  const programCards = [
-    {
-      title: "Skill Development Training",
-      image: "/indtrain.jpeg",
-      alt: "Skill development training",
-    },
-    {
-      title: "Industrial Training Programs",
-      image: "/skilldev.jpeg",
-      alt: "Industrial training programs",
-    },
-    {
-      title: "Youth Empowerment Workshops",
-      image: "/skill.jpeg",
-      alt: "Youth empowerment workshops",
-    },
-  ];
 
   const fallbackTestimonials = [
     {
@@ -122,25 +103,6 @@ export default function Home() {
     loadTestimonials();
   }, [config.collections.testimonials, config.databaseId, databases]);
 
-  useEffect(() => {
-    if (!activeTestimonialVideo) return;
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setActiveTestimonialVideo(null);
-      }
-    };
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    window.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [activeTestimonialVideo]);
-
   const renderTestimonialCard = (testimonial, index) => {
     const youtubeId = extractYouTubeVideoId(testimonial.image);
 
@@ -151,29 +113,14 @@ export default function Home() {
       >
         <div className="overflow-hidden rounded-2xl border border-[#dbe3e7] bg-black">
           {youtubeId ? (
-            <button
-              type="button"
-              onClick={() =>
-                setActiveTestimonialVideo({
-                  youtubeId,
-                  title: `${testimonial.name} testimonial`,
-                })
-              }
-              className="group relative block aspect-video w-full cursor-pointer"
-              aria-label={`Play ${testimonial.name} testimonial video`}
-            >
-              <img
-                src={`https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
-                alt={`${testimonial.name} testimonial preview`}
-                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
-                loading="lazy"
-                referrerPolicy="no-referrer"
-              />
-              <span className="absolute inset-0 bg-black/35 transition group-hover:bg-black/45" />
-              <span className="absolute left-1/2 top-1/2 inline-flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-[#1d2238] shadow-lg transition group-hover:scale-105">
-                ▶
-              </span>
-            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}`}
+              title={`${testimonial.name} testimonial`}
+              className="aspect-video w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
           ) : (
             <div className="flex aspect-video items-center justify-center bg-[#0f172a] px-4 text-center text-sm font-medium text-white/85">
               Invalid YouTube URL
@@ -196,24 +143,27 @@ export default function Home() {
       <Navbar />
 
       <section className="relative isolate overflow-hidden bg-white">
-        <div className="relative mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-350 grid-cols-1 items-center gap-8 px-4 pt-8 pb-6 md:min-h-[calc(100vh-96px)] md:px-8 md:pt-12 md:pb-0 lg:grid-cols-2 lg:gap-12 lg:px-10">
-          <div className="max-w-3xl">
+        <div className="relative mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-7xl grid-cols-1 items-center gap-8 px-4 pt-8 pb-6 md:min-h-[calc(100vh-96px)] md:px-8 md:pb-0 lg:grid-cols-2 lg:gap-1 lg:px-0">
+          {/* LEFT — text block: full width in single-col, auto in two-col */}
+          <div className="flex flex-col items-start">
             <h1 className="text-4xl font-extrabold leading-tight text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl">
               <span className="block text-[#63c37a]">
                 Empowering <TextHighlight>Youth</TextHighlight>
               </span>
-              <span className="block text-[#111827]">… Empowering Nation</span>
+              <span className="block text-[#111827]">
+                ... Empowering Nation
+              </span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-base text-[#5b667d] md:mt-6 md:text-xl">
+            <p className="mt-5 max-w-xl text-base text-[#5b667d] md:mt-6 md:text-xl">
               SDEAS Welfare Foundation is a non-profit organization dedicated to
               empowering youth through skill development, education, and
               community development initiatives.
             </p>
 
-            <div className="mt-8 flex justify-center md:block md:mt-10">
+            <div className="mt-8 md:mt-10">
               <a
-                href="/partner-with-us"
+                href="#"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white transition-colors hover:bg-[#459557] md:h-14 md:px-10 md:text-lg"
               >
                 DONATE NOW
@@ -221,79 +171,21 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="relative flex h-full items-end justify-center overflow-visible lg:justify-end">
+          {/* RIGHT — image: anchored to bottom on desktop */}
+          <div className="relative flex h-full items-end justify-center lg:justify-end">
             <Image
               src="/Gemini_Generated_Image_qxe6jxqxe6jxqxe6.png"
               alt="SDEAS youth skill development and training"
               width={1100}
               height={1250}
               priority
-              className="h-auto max-h-[62vh] w-full max-w-136 object-contain sm:max-h-[70vh] sm:w-[78vw] lg:max-h-[92vh] lg:w-[58vw] lg:max-w-245 xl:w-[55vw]"
+              className="h-auto max-h-[62vh] w-full max-w-sm object-contain sm:max-h-[70vh] sm:max-w-md lg:max-h-[92vh] lg:max-w-xl"
             />
           </div>
         </div>
       </section>
 
-      <section className="relative z-10">
-        <div className="flex flex-col md:flex-row">
-          {programCards.map((card, index) => {
-            const isActive = activeProgramCard === index;
-
-            return (
-              <article
-                key={card.title}
-                role="button"
-                tabIndex={0}
-                aria-pressed={isActive}
-                onClick={() => setActiveProgramCard(index)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    setActiveProgramCard(index);
-                  }
-                }}
-                className={`group relative isolate min-h-72 overflow-hidden p-6 transition-all duration-500 ease-out focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#63c37a] sm:min-h-80 md:min-h-88 md:p-10 ${
-                  isActive ? "md:basis-[60%]" : "md:basis-[20%]"
-                }`}
-              >
-                <Image
-                  src={card.image}
-                  alt={card.alt}
-                  fill
-                  className={`object-cover transition-transform duration-700 ${
-                    isActive ? "scale-105" : "scale-100 group-hover:scale-108"
-                  }`}
-                />
-                <div
-                  className={`absolute inset-0 bg-linear-to-t from-[#0f172acc] via-[#0f172a6e] to-[#63c37a33] transition-opacity duration-500 ${
-                    isActive ? "opacity-100" : "opacity-90"
-                  }`}
-                />
-                <div className="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-white/15 to-transparent" />
-
-                <div className="relative flex h-full flex-col justify-end text-white">
-                  <p className="mb-4 text-xs font-semibold tracking-[0.22em] text-white/80 uppercase">
-                    Program
-                  </p>
-                  <h3 className="max-w-[16ch] font-serif text-2xl leading-tight font-semibold sm:text-3xl md:text-4xl">
-                    {card.title}
-                  </h3>
-                  <a
-                    href="/programs"
-                    className={`mt-6 inline-flex w-fit items-center gap-2 rounded-full border border-white/35 px-5 py-2 text-sm font-semibold tracking-[0.12em] text-white transition-all duration-300 ${
-                      isActive
-                        ? "bg-white/15 hover:bg-white hover:text-[#0f172a]"
-                        : "bg-white/8 hover:bg-white/20"
-                    }`}
-                  >
-                    LEARN MORE <span aria-hidden>→</span>
-                  </a>
-                </div>
-              </article>
-            );
-          })}
-        </div>
-      </section>
+      <ProgramCardsSection />
 
       <section className="bg-[#efefef] py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-10 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
@@ -313,7 +205,7 @@ export default function Home() {
             </p>
 
             <a
-              href="/about"
+              href="#"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
@@ -388,7 +280,7 @@ export default function Home() {
             </p>
 
             <a
-              href="/about"
+              href="#"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
@@ -467,7 +359,7 @@ export default function Home() {
             </p>
 
             <a
-              href="/partner-with-us"
+              href="#"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               PARTNER NOW
@@ -484,7 +376,7 @@ export default function Home() {
             />
 
             <a
-              href="/partner-with-us"
+              href="#"
               aria-label="Partner with SDEAS Welfare Foundation"
               className="absolute left-1/2 top-1/2 inline-flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-[#63c37a] text-3xl text-white shadow-lg transition-colors hover:bg-[#459557] md:h-28 md:w-28 md:text-5xl"
             >
@@ -499,38 +391,6 @@ export default function Home() {
       <GetInTouchSection />
 
       <FooterSection />
-
-      {activeTestimonialVideo && (
-        <div
-          className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label={activeTestimonialVideo.title}
-          onClick={() => setActiveTestimonialVideo(null)}
-        >
-          <div
-            className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              onClick={() => setActiveTestimonialVideo(null)}
-              className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-lg text-white transition hover:bg-black/80"
-              aria-label="Close video"
-            >
-              ✕
-            </button>
-            <iframe
-              src={`https://www.youtube.com/embed/${activeTestimonialVideo.youtubeId}?autoplay=1&rel=0`}
-              title={activeTestimonialVideo.title}
-              className="aspect-video w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      )}
 
       <style jsx>{`
         @keyframes testimonial-scroll {
