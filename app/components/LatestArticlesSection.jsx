@@ -1,3 +1,8 @@
+"use client";
+
+import { motion } from "motion/react";
+import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
+
 const latestArticles = [
   {
     author: "SDEAS Foundation",
@@ -32,14 +37,27 @@ export default function LatestArticlesSection() {
   return (
     <section className="bg-white py-14 md:py-24">
       <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
-        <h2 className="text-center font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-          Events & Updates
-        </h2>
+        <motion.h2
+          className="text-center font-serif text-4xl font-bold text-[#1d2238] md:text-6xl"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          Events &amp; Updates
+        </motion.h2>
 
-        <div className="mt-12 grid grid-cols-1 gap-7 lg:grid-cols-3">
+        <motion.div
+          className="mt-12 grid grid-cols-1 gap-7 lg:grid-cols-3"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
           {latestArticles.map((article) => (
-            <article
+            <motion.article
               key={article.title}
+              variants={fadeInUp}
               className="overflow-hidden border border-[#d9d9d9] bg-white"
             >
               <img
@@ -83,9 +101,9 @@ export default function LatestArticlesSection() {
                   Read Update →
                 </a>
               </div>
-            </article>
+            </motion.article>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );

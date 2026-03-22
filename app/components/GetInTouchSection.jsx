@@ -1,4 +1,8 @@
+"use client";
+
 import Image from "next/image";
+import { motion } from "motion/react";
+import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
 
 export default function GetInTouchSection() {
   return (
@@ -15,18 +19,33 @@ export default function GetInTouchSection() {
             className="h-auto w-full object-contain"
           />
         </div>
-        <div className="px-4 py-10 text-center">
-          <p className="text-lg font-medium text-[#1a1f3b]">Partner With Us</p>
-          <h2 className="mt-2 font-serif text-3xl font-bold leading-tight text-[#171a34]">
+        <motion.div
+          className="px-4 py-10 text-center"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <motion.p
+            variants={fadeInUp}
+            className="text-lg font-medium text-[#1a1f3b]"
+          >
+            Partner With Us
+          </motion.p>
+          <motion.h2
+            variants={fadeInUp}
+            className="mt-2 font-serif text-3xl font-bold leading-tight text-[#171a34]"
+          >
             Let&apos;s Build Youth Careers Together
-          </h2>
-          <a
+          </motion.h2>
+          <motion.a
+            variants={fadeInUp}
             href="#"
             className="mt-6 inline-flex h-11 items-center justify-center rounded-full bg-[#63c37a] px-6 text-base font-bold text-white transition-colors hover:bg-[#459557]"
           >
             Call / Text: 9348629818
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </div>
 
       {/* Desktop: overlay image with text */}
@@ -38,20 +57,33 @@ export default function GetInTouchSection() {
           priority={false}
           className="object-cover object-center"
         />
-        <div className="relative z-10 mx-auto flex h-full w-full max-w-350 flex-col items-center justify-center px-4 text-center md:px-8 lg:px-10">
-          <p className="text-xl font-medium text-[#1a1f3b] md:text-3xl">
+        <motion.div
+          className="relative z-10 mx-auto flex h-full w-full max-w-350 flex-col items-center justify-center px-4 text-center md:px-8 lg:px-10"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
+          <motion.p
+            variants={fadeInUp}
+            className="text-xl font-medium text-[#1a1f3b] md:text-3xl"
+          >
             Partner With Us
-          </p>
-          <h2 className="mt-2 font-serif text-4xl font-bold leading-tight text-[#171a34] md:text-6xl">
+          </motion.p>
+          <motion.h2
+            variants={fadeInUp}
+            className="mt-2 font-serif text-4xl font-bold leading-tight text-[#171a34] md:text-6xl"
+          >
             Let&apos;s Build Youth Careers Together
-          </h2>
-          <a
+          </motion.h2>
+          <motion.a
+            variants={fadeInUp}
             href="#"
             className="mt-8 inline-flex h-14 items-center justify-center rounded-full bg-[#63c37a] px-12 text-xl font-bold text-white transition-colors hover:bg-[#459557]"
           >
             Call / Text: 9348629818
-          </a>
-        </div>
+          </motion.a>
+        </motion.div>
       </div>
     </section>
   );

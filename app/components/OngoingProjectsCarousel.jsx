@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { motion } from "motion/react";
+import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
 
 const projects = [
   {
@@ -37,14 +39,26 @@ export default function OngoingProjectsCarousel() {
   return (
     <section className="bg-white py-14 md:py-24">
       <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
-        <div className="mb-8 flex items-end justify-between gap-4 md:mb-10">
+        <motion.div
+          className="mb-8 flex items-end justify-between gap-4 md:mb-10"
+          variants={staggerContainer}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
           <div>
-            <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl font-semibold text-[#63c37a] md:text-2xl"
+            >
               CSR Projects
-            </p>
-            <h2 className="mt-3 font-serif text-3xl font-bold leading-tight text-[#1d2238] sm:text-4xl md:text-5xl">
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="mt-3 font-serif text-3xl font-bold leading-tight text-[#1d2238] sm:text-4xl md:text-5xl"
+            >
               Ongoing Programs for Skill Development
-            </h2>
+            </motion.h2>
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
@@ -65,9 +79,15 @@ export default function OngoingProjectsCarousel() {
               →
             </button>
           </div>
-        </div>
+        </motion.div>
 
-        <div className="relative overflow-hidden rounded-3xl">
+        <motion.div
+          className="relative overflow-hidden rounded-3xl"
+          variants={fadeInUp}
+          initial="hidden"
+          whileInView="visible"
+          viewport={viewport}
+        >
           <img
             src={current.image}
             alt={current.title}
@@ -91,7 +111,7 @@ export default function OngoingProjectsCarousel() {
               SUPPORT NOW
             </a>
           </div>
-        </div>
+        </motion.div>
 
         <div className="mt-5 flex items-center justify-center gap-3 md:hidden">
           <button

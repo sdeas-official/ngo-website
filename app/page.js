@@ -1,8 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
-import { Query } from "appwrite";
+import { motion } from "motion/react";
 import OngoingProjectsCarousel from "./components/OngoingProjectsCarousel";
 import LatestArticlesSection from "./components/LatestArticlesSection";
 import GetInTouchSection from "./components/GetInTouchSection";
@@ -10,169 +9,67 @@ import FooterSection from "./components/FooterSection";
 import { TextHighlight } from "./components/TextHighlight";
 import Navbar from "./components/Navbar";
 import ProgramCardsSection from "./components/ProgramCardsSection";
-import { createDatabasesClient } from "../lib/appwriteClient";
-
-function extractYouTubeVideoId(url) {
-  if (typeof url !== "string" || !url.trim()) return "";
-
-  try {
-    const parsed = new URL(url.trim());
-    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
-
-    if (host === "youtu.be") {
-      return parsed.pathname.split("/").filter(Boolean)[0] || "";
-    }
-
-    if (host === "youtube.com" || host === "m.youtube.com") {
-      if (parsed.pathname === "/watch") {
-        return parsed.searchParams.get("v") || "";
-      }
-
-      if (parsed.pathname.startsWith("/shorts/")) {
-        return parsed.pathname.split("/").filter(Boolean)[1] || "";
-      }
-
-      if (parsed.pathname.startsWith("/embed/")) {
-        return parsed.pathname.split("/").filter(Boolean)[1] || "";
-      }
-    }
-
-    return "";
-  } catch {
-    return "";
-  }
-}
+import TestimonialsSection from "./components/TestimonialsSection";
+import {
+  fadeInUp,
+  fadeInLeft,
+  fadeInRight,
+  staggerContainer,
+  viewport,
+} from "../lib/animations";
 
 export default function Home() {
-  const { databases, config } = useMemo(() => createDatabasesClient(), []);
-
-  const fallbackTestimonials = [
-    {
-      name: "Ritika Das",
-      image: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
-      text: "SDEAS has created visible change in the communities we support. Their team is transparent, committed, and deeply impact-focused.",
-    },
-    {
-      name: "Prakash Kumar",
-      image: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
-      text: "My son gained confidence and practical skills through SDEAS training. Today, he has a stable job and supports our family.",
-    },
-    {
-      name: "Ananya Sahu",
-      image: "https://youtu.be/aqz-KE-bpKQ",
-      text: "Working with SDEAS is meaningful. Every batch of youth we mentor carries new hope, capability, and confidence into their future.",
-    },
-  ];
-
-  const [testimonials, setTestimonials] = useState(fallbackTestimonials);
-  const shouldUseTestimonialInfiniteScroll = testimonials.length > 3;
-
-  useEffect(() => {
-    const loadTestimonials = async () => {
-      if (
-        !databases ||
-        !config.databaseId ||
-        !config.collections.testimonials
-      ) {
-        return;
-      }
-
-      try {
-        const result = await databases.listDocuments(
-          config.databaseId,
-          config.collections.testimonials,
-          [Query.orderDesc("$createdAt"), Query.limit(100)],
-        );
-
-        const mapped = result.documents
-          .map((doc) => ({
-            name: typeof doc.name === "string" ? doc.name : "",
-            image: typeof doc.image === "string" ? doc.image : "",
-            text: typeof doc.text === "string" ? doc.text : "",
-          }))
-          .filter((item) => item.name && item.image && item.text);
-
-        if (mapped.length) {
-          setTestimonials(mapped);
-        }
-      } catch {
-        // keep fallback testimonials
-      }
-    };
-
-    loadTestimonials();
-  }, [config.collections.testimonials, config.databaseId, databases]);
-
-  const renderTestimonialCard = (testimonial, index) => {
-    const youtubeId = extractYouTubeVideoId(testimonial.image);
-
-    return (
-      <article
-        key={`${testimonial.name}-${index}`}
-        className="rounded-3xl border border-[#63c37a1f] bg-white p-5 shadow-[0_10px_28px_rgba(17,24,39,0.08)]"
-      >
-        <div className="overflow-hidden rounded-2xl border border-[#dbe3e7] bg-black">
-          {youtubeId ? (
-            <iframe
-              src={`https://www.youtube.com/embed/${youtubeId}`}
-              title={`${testimonial.name} testimonial`}
-              className="aspect-video w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
-          ) : (
-            <div className="flex aspect-video items-center justify-center bg-[#0f172a] px-4 text-center text-sm font-medium text-white/85">
-              Invalid YouTube URL
-            </div>
-          )}
-        </div>
-
-        <h3 className="mt-4 text-lg font-bold text-[#1d2238]">
-          {testimonial.name}
-        </h3>
-        <p className="mt-2 text-base leading-relaxed text-[#445066]">
-          “{testimonial.text}”
-        </p>
-      </article>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-white">
       <Navbar />
 
       <section className="relative isolate overflow-hidden bg-white">
         <div className="relative mx-auto grid min-h-[calc(100vh-80px)] w-full max-w-7xl grid-cols-1 items-center gap-8 px-4 pt-8 pb-6 md:min-h-[calc(100vh-96px)] md:px-8 md:pb-0 lg:grid-cols-2 lg:gap-1 lg:px-0">
-          {/* LEFT — text block: full width in single-col, auto in two-col */}
-          <div className="flex flex-col items-start">
-            <h1 className="text-4xl font-extrabold leading-tight text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl">
+          {/* LEFT — text block */}
+          <motion.div
+            className="flex flex-col items-start"
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.h1
+              variants={fadeInUp}
+              className="text-4xl font-extrabold leading-tight text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl"
+            >
               <span className="block text-[#63c37a]">
                 Empowering <TextHighlight>Youth</TextHighlight>
               </span>
               <span className="block text-[#111827]">
                 ... Empowering Nation
               </span>
-            </h1>
+            </motion.h1>
 
-            <p className="mt-5 max-w-xl text-base text-[#5b667d] md:mt-6 md:text-xl">
+            <motion.p
+              variants={fadeInUp}
+              className="mt-5 max-w-xl text-base text-[#5b667d] md:mt-6 md:text-xl"
+            >
               SDEAS Welfare Foundation is a non-profit organization dedicated to
               empowering youth through skill development, education, and
               community development initiatives.
-            </p>
+            </motion.p>
 
-            <div className="mt-8 md:mt-10">
+            <motion.div variants={fadeInUp} className="mt-8 md:mt-10">
               <a
                 href="/partner-with-us"
                 className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white transition-colors hover:bg-[#459557] md:h-14 md:px-10 md:text-lg"
               >
                 DONATE NOW
               </a>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
 
           {/* RIGHT — image: anchored to bottom on desktop */}
-          <div className="relative flex h-full items-end justify-center lg:justify-end">
+          <motion.div
+            className="relative flex h-full items-end justify-center lg:justify-end"
+            variants={fadeInRight}
+            initial="hidden"
+            animate="visible"
+          >
             <Image
               src="/Gemini_Generated_Image_qxe6jxqxe6jxqxe6.png"
               alt="SDEAS youth skill development and training"
@@ -181,7 +78,7 @@ export default function Home() {
               priority
               className="h-auto max-h-[62vh] w-full max-w-sm object-contain sm:max-h-[70vh] sm:max-w-md lg:max-h-[92vh] lg:max-w-xl"
             />
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -189,51 +86,93 @@ export default function Home() {
 
       <section className="bg-[#efefef] py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-10 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
-          <div className="max-w-2xl">
-            <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
+          <motion.div
+            className="max-w-2xl"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl font-semibold text-[#63c37a] md:text-2xl"
+            >
               About Us
-            </p>
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl">
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl"
+            >
               <TextHighlight>Our Mission</TextHighlight>
-            </h2>
+            </motion.h2>
 
-            <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl">
+            <motion.p
+              variants={fadeInUp}
+              className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
+            >
               SDEAS Welfare Foundation is committed to developing and empowering
               youth through skill development, industrial training, and
               community programs. We collaborate with industries and CSR
               initiatives to create practical career opportunities.
-            </p>
+            </motion.p>
 
-            <a
+            <motion.a
+              variants={fadeInUp}
               href="/about"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
-            </a>
-          </div>
+            </motion.a>
+          </motion.div>
 
-          <div className="relative h-72 overflow-hidden rounded-2xl bg-[#d9d9d9] sm:h-90 md:h-105">
+          <motion.div
+            className="relative h-72 overflow-hidden rounded-2xl bg-[#d9d9d9] sm:h-90 md:h-105"
+            variants={fadeInRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
             <Image
               src="/aboutus.jpeg"
               alt="Skill and community development initiative"
               fill
               className="object-cover"
             />
-          </div>
+          </motion.div>
         </div>
       </section>
 
       <section className="bg-[#efefef] py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-8 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
           {/* Mobile-only heading shown above photos */}
-          <div className="lg:hidden">
-            <p className="text-xl font-semibold text-[#63c37a]">What We Do</p>
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238]">
+          <motion.div
+            className="lg:hidden"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl font-semibold text-[#63c37a]"
+            >
+              What We Do
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238]"
+            >
               <TextHighlight>Our Vision</TextHighlight>
-            </h2>
-          </div>
+            </motion.h2>
+          </motion.div>
 
-          <div className="grid grid-cols-2 grid-rows-2 gap-4 md:h-155 md:gap-6">
+          <motion.div
+            className="grid grid-cols-2 grid-rows-2 gap-4 md:h-155 md:gap-6"
+            variants={fadeInLeft}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
             <div className="relative row-span-2 h-72 overflow-hidden rounded-3xl sm:h-88 md:h-auto md:rounded-4xl">
               <Image
                 src="/flag2.jpeg"
@@ -260,113 +199,102 @@ export default function Home() {
                 className="object-cover"
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div className="max-w-2xl">
+          <motion.div
+            className="max-w-2xl"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
             {/* Desktop-only heading shown beside photos */}
             <div className="hidden lg:block">
-              <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
+              <motion.p
+                variants={fadeInUp}
+                className="text-xl font-semibold text-[#63c37a] md:text-2xl"
+              >
                 What We Do
-              </p>
-              <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl">
+              </motion.p>
+              <motion.h2
+                variants={fadeInUp}
+                className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl"
+              >
                 <TextHighlight>Our Vision</TextHighlight>
-              </h2>
+              </motion.h2>
             </div>
 
-            <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl">
+            <motion.p
+              variants={fadeInUp}
+              className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
+            >
               To create a society where every young individual has access to
               skill development, education, and employment opportunities,
               enabling them to become self-reliant and responsible citizens.
-            </p>
+            </motion.p>
 
-            <a
+            <motion.a
+              variants={fadeInUp}
               href="/about"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               LEARN MORE
-            </a>
-          </div>
+            </motion.a>
+          </motion.div>
         </div>
       </section>
 
       <OngoingProjectsCarousel />
 
-      <section className="bg-white py-14 md:py-24">
-        <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
-          <div className="text-center">
-            <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Testimonials
-            </p>
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#1d2238] md:text-6xl">
-              Voices of Impact
-            </h2>
-            <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Hear what our partners, families, and volunteers say about the
-              change we create together.
-            </p>
-          </div>
-
-          {shouldUseTestimonialInfiniteScroll ? (
-            <div className="mt-10 overflow-hidden">
-              <div className="flex w-max animate-[testimonial-scroll_34s_linear_infinite] hover:[animation-play-state:paused]">
-                <div className="flex shrink-0 gap-5 pr-5">
-                  {testimonials.map((testimonial, index) => (
-                    <div
-                      key={`${testimonial.name}-track-a-${index}`}
-                      className="w-[84vw] max-w-110 shrink-0 sm:w-[72vw] md:w-[44vw] xl:w-[31vw]"
-                    >
-                      {renderTestimonialCard(testimonial, index)}
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex shrink-0 gap-5 pr-5" aria-hidden="true">
-                  {testimonials.map((testimonial, index) => (
-                    <div
-                      key={`${testimonial.name}-track-b-${index}`}
-                      className="w-[84vw] max-w-110 shrink-0 sm:w-[72vw] md:w-[44vw] xl:w-[31vw]"
-                    >
-                      {renderTestimonialCard(testimonial, index)}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-              {testimonials.map((testimonial, index) =>
-                renderTestimonialCard(testimonial, index),
-              )}
-            </div>
-          )}
-        </div>
-      </section>
+      <TestimonialsSection />
 
       <section className="bg-white py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-10 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
-          <div className="max-w-2xl">
-            <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
+          <motion.div
+            className="max-w-2xl"
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
+            <motion.p
+              variants={fadeInUp}
+              className="text-xl font-semibold text-[#63c37a] md:text-2xl"
+            >
               CSR Partnership
-            </p>
-            <h2 className="mt-4 font-serif text-4xl font-bold leading-tight text-[#1d2238] md:text-6xl">
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="mt-4 font-serif text-4xl font-bold leading-tight text-[#1d2238] md:text-6xl"
+            >
               Partner With Us for Social Impact
-            </h2>
+            </motion.h2>
 
-            <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl">
+            <motion.p
+              variants={fadeInUp}
+              className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
+            >
               SDEAS Welfare Foundation actively collaborates with industries and
               corporate organizations to implement CSR initiatives focused on
               skill development, youth empowerment, and community development.
-            </p>
+            </motion.p>
 
-            <a
+            <motion.a
+              variants={fadeInUp}
               href="/partner-with-us"
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
               PARTNER NOW
-            </a>
-          </div>
+            </motion.a>
+          </motion.div>
 
-          <div className="relative overflow-hidden rounded-2xl">
+          <motion.div
+            className="relative overflow-hidden rounded-2xl"
+            variants={fadeInRight}
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewport}
+          >
             <img
               src="https://images.unsplash.com/photo-1559027615-cd4628902d4a?auto=format&fit=crop&w=1600&q=80"
               alt="Hands joined to symbolize partnership"
@@ -382,7 +310,7 @@ export default function Home() {
             >
               ▶
             </a>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -391,17 +319,6 @@ export default function Home() {
       <GetInTouchSection />
 
       <FooterSection />
-
-      <style jsx>{`
-        @keyframes testimonial-scroll {
-          from {
-            transform: translateX(0);
-          }
-          to {
-            transform: translateX(-50%);
-          }
-        }
-      `}</style>
     </div>
   );
 }

@@ -2,6 +2,8 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { motion } from "motion/react";
+import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
 
 const programCards = [
   {
@@ -33,39 +35,64 @@ export default function ProgramCardsSection() {
   return (
     <section className="relative z-10 bg-[#f8faf8] py-20 md:py-28">
       {/* Section Header */}
-      <div className="mx-auto mb-14 max-w-7xl px-6 md:px-0">
+      <motion.div
+        className="mx-auto mb-14 max-w-7xl px-6 md:px-0"
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewport}
+      >
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="mb-3 text-xs font-bold tracking-[0.3em] text-[#63c37a] uppercase">
+            <motion.p
+              variants={fadeInUp}
+              className="mb-3 text-xs font-bold tracking-[0.3em] text-[#63c37a] uppercase"
+            >
               What We Do
-            </p>
-            <h2 className="font-serif text-4xl font-bold leading-tight text-[#111827] sm:text-5xl md:text-6xl">
+            </motion.p>
+            <motion.h2
+              variants={fadeInUp}
+              className="font-serif text-4xl font-bold leading-tight text-[#111827] sm:text-5xl md:text-6xl"
+            >
               Our Programs
-            </h2>
+            </motion.h2>
           </div>
-          <p className="max-w-md text-base leading-relaxed text-[#5b667d] md:text-right">
+          <motion.p
+            variants={fadeInUp}
+            className="max-w-md text-base leading-relaxed text-[#5b667d] md:text-right"
+          >
             Each initiative is designed to create lasting impact in the lives of
             young people across communities.
-          </p>
+          </motion.p>
         </div>
 
         {/* Decorative divider */}
-        <div className="mt-10 flex items-center gap-4">
+        <motion.div
+          variants={fadeInUp}
+          className="mt-10 flex items-center gap-4"
+        >
           <div className="h-px flex-1 bg-[#e2e8f0]" />
           <div className="h-2 w-2 rotate-45 bg-[#63c37a]" />
           <div className="h-px w-12 bg-[#63c37a]" />
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Cards Grid */}
-      <div className="mx-auto max-w-7xl px-6 md:px-0">
+      <motion.div
+        className="mx-auto max-w-7xl px-6 md:px-0"
+        variants={staggerContainer}
+        initial="hidden"
+        whileInView="visible"
+        viewport={viewport}
+      >
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {programCards.map((card, index) => (
-            <article
+            <motion.article
               key={card.title}
+              variants={fadeInUp}
               onMouseEnter={() => setHoveredIndex(index)}
               onMouseLeave={() => setHoveredIndex(null)}
-              className="group relative isolate flex min-h-[420px] cursor-pointer flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
+              className="group relative isolate flex min-h-105 cursor-pointer flex-col overflow-hidden rounded-2xl shadow-md transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl"
             >
               {/* Background image */}
               <Image
@@ -76,7 +103,7 @@ export default function ProgramCardsSection() {
               />
 
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a] via-[#0f172a]/60 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
+              <div className="absolute inset-0 bg-linear-to-t from-[#0f172a] via-[#0f172a]/60 to-transparent opacity-80 transition-opacity duration-500 group-hover:opacity-95" />
 
               {/* Top accent bar */}
               <div className="absolute inset-x-0 top-0 h-1 bg-[#63c37a] transition-all duration-500 group-hover:h-1.5" />
@@ -111,10 +138,10 @@ export default function ProgramCardsSection() {
                   </span>
                 </a>
               </div>
-            </article>
+            </motion.article>
           ))}
         </div>
-      </div>
+      </motion.div>
     </section>
   );
 }
