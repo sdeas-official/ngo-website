@@ -11,6 +11,37 @@ import { TextHighlight } from "./components/TextHighlight";
 import Navbar from "./components/Navbar";
 import { createDatabasesClient } from "../lib/appwriteClient";
 
+function extractYouTubeVideoId(url) {
+  if (typeof url !== "string" || !url.trim()) return "";
+
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      return parsed.pathname.split("/").filter(Boolean)[0] || "";
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname === "/watch") {
+        return parsed.searchParams.get("v") || "";
+      }
+
+      if (parsed.pathname.startsWith("/shorts/")) {
+        return parsed.pathname.split("/").filter(Boolean)[1] || "";
+      }
+
+      if (parsed.pathname.startsWith("/embed/")) {
+        return parsed.pathname.split("/").filter(Boolean)[1] || "";
+      }
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
 export default function Home() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
   const [activeProgramCard, setActiveProgramCard] = useState(0);
@@ -36,25 +67,32 @@ export default function Home() {
   const fallbackTestimonials = [
     {
       name: "Ritika Das",
-      image:
-        "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=500&q=80",
+      image: "https://www.youtube.com/watch?v=ysz5S6PUM-U",
       text: "SDEAS has created visible change in the communities we support. Their team is transparent, committed, and deeply impact-focused.",
     },
     {
       name: "Prakash Kumar",
-      image:
-        "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=500&q=80",
+      image: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
       text: "My son gained confidence and practical skills through SDEAS training. Today, he has a stable job and supports our family.",
     },
     {
       name: "Ananya Sahu",
-      image:
-        "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=500&q=80",
+      image: "https://youtu.be/aqz-KE-bpKQ",
       text: "Working with SDEAS is meaningful. Every batch of youth we mentor carries new hope, capability, and confidence into their future.",
     },
   ];
 
   const [testimonials, setTestimonials] = useState(fallbackTestimonials);
+  const [slidesPerView, setSlidesPerView] = useState(1);
+  const [testimonialSlide, setTestimonialSlide] = useState(0);
+  const [isSlideTransitionEnabled, setIsSlideTransitionEnabled] =
+    useState(true);
+
+  const shouldUseTestimonialSlider = testimonials.length > 3;
+
+  const sliderTestimonials = shouldUseTestimonialSlider
+    ? [...testimonials, ...testimonials.slice(0, slidesPerView)]
+    : testimonials;
 
   useEffect(() => {
     const loadTestimonials = async () => {
@@ -91,6 +129,76 @@ export default function Home() {
 
     loadTestimonials();
   }, [config.collections.testimonials, config.databaseId, databases]);
+
+  useEffect(() => {
+    const updateSlidesPerView = () => {
+      if (window.innerWidth >= 1280) {
+        setSlidesPerView(3);
+      } else if (window.innerWidth >= 768) {
+        setSlidesPerView(2);
+      } else {
+        setSlidesPerView(1);
+      }
+    };
+
+    updateSlidesPerView();
+    window.addEventListener("resize", updateSlidesPerView);
+
+    return () => {
+      window.removeEventListener("resize", updateSlidesPerView);
+    };
+  }, []);
+
+  useEffect(() => {
+    setTestimonialSlide(0);
+  }, [slidesPerView, testimonials.length]);
+
+  useEffect(() => {
+    if (!shouldUseTestimonialSlider) return;
+
+    const interval = setInterval(() => {
+      setTestimonialSlide((prev) => prev + 1);
+    }, 4500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [shouldUseTestimonialSlider]);
+
+  const renderTestimonialCard = (testimonial, index) => {
+    const youtubeId = extractYouTubeVideoId(testimonial.image);
+
+    return (
+      <article
+        key={`${testimonial.name}-${index}`}
+        className="rounded-3xl border border-[#63c37a1f] bg-white p-5 shadow-[0_10px_28px_rgba(17,24,39,0.08)]"
+      >
+        <div className="overflow-hidden rounded-2xl border border-[#dbe3e7] bg-black">
+          {youtubeId ? (
+            <iframe
+              src={`https://www.youtube.com/embed/${youtubeId}`}
+              title={`${testimonial.name} testimonial`}
+              className="aspect-video w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          ) : (
+            <div className="flex aspect-video items-center justify-center bg-[#0f172a] px-4 text-center text-sm font-medium text-white/85">
+              Invalid YouTube URL
+            </div>
+          )}
+        </div>
+
+        <h3 className="mt-4 text-lg font-bold text-[#1d2238]">
+          {testimonial.name}
+        </h3>
+        <p className="mt-2 text-base leading-relaxed text-[#445066]">
+          “{testimonial.text}”
+        </p>
+      </article>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-white">
@@ -315,36 +423,48 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
-            {testimonials.map((testimonial) => (
-              <article
-                key={testimonial.name}
-                className="rounded-3xl border border-[#63c37a1f] bg-white p-6 shadow-[0_10px_28px_rgba(17,24,39,0.08)]"
+          {shouldUseTestimonialSlider ? (
+            <div className="mt-10 overflow-hidden">
+              <div
+                className="flex gap-5"
+                style={{
+                  transform: `translateX(-${(testimonialSlide * 100) / slidesPerView}%)`,
+                  transition: isSlideTransitionEnabled
+                    ? "transform 650ms ease"
+                    : "none",
+                }}
+                onTransitionEnd={() => {
+                  if (testimonialSlide === testimonials.length) {
+                    setIsSlideTransitionEnabled(false);
+                    setTestimonialSlide(0);
+                    requestAnimationFrame(() => {
+                      requestAnimationFrame(() => {
+                        setIsSlideTransitionEnabled(true);
+                      });
+                    });
+                  }
+                }}
               >
-                <div className="flex items-center gap-4">
-                  <div className="relative h-14 w-14 overflow-hidden rounded-full ring-2 ring-[#63c37a33]">
-                    <Image
-                      src={testimonial.image}
-                      alt={testimonial.name}
-                      fill
-                      className="object-cover"
-                      sizes="56px"
-                    />
+                {sliderTestimonials.map((testimonial, index) => (
+                  <div
+                    key={`${testimonial.name}-slide-${index}`}
+                    className="shrink-0"
+                    style={{
+                      width: `calc(${100 / slidesPerView}% - ${(20 * (slidesPerView - 1)) / slidesPerView}px)`,
+                    }}
+                  >
+                    {renderTestimonialCard(testimonial, index)}
                   </div>
-
-                  <div>
-                    <h3 className="text-base font-bold text-[#1d2238]">
-                      {testimonial.name}
-                    </h3>
-                  </div>
-                </div>
-
-                <p className="mt-5 text-base leading-relaxed text-[#445066]">
-                  “{testimonial.text}”
-                </p>
-              </article>
-            ))}
-          </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="mt-10 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
+              {testimonials.map((testimonial, index) =>
+                renderTestimonialCard(testimonial, index),
+              )}
+            </div>
+          )}
         </div>
       </section>
 

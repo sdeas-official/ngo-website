@@ -9,6 +9,7 @@ const sections = [
   { key: "about", label: "About Us Page" },
   { key: "gallery", label: "Gallery Page" },
   { key: "blog", label: "Blog Page" },
+  { key: "programs", label: "Programs Page" },
   { key: "testimonials", label: "Testimonials" },
   { key: "responses", label: "Responses" },
   { key: "partnerResponses", label: "Partner Requests" },
@@ -86,6 +87,13 @@ const createEmptyBlogForm = () => ({
   tags: "",
 });
 
+const createEmptyProgramForm = () => ({
+  title: "",
+  image: "",
+  mainText: "",
+  importantPoints: [""],
+});
+
 const createEmptyTestimonialForm = () => ({
   name: "",
   image: "",
@@ -103,6 +111,37 @@ function sanitizeDocument(data) {
   return clean;
 }
 
+function extractYouTubeVideoId(url) {
+  if (typeof url !== "string" || !url.trim()) return "";
+
+  try {
+    const parsed = new URL(url.trim());
+    const host = parsed.hostname.replace(/^www\./, "").toLowerCase();
+
+    if (host === "youtu.be") {
+      return parsed.pathname.split("/").filter(Boolean)[0] || "";
+    }
+
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      if (parsed.pathname === "/watch") {
+        return parsed.searchParams.get("v") || "";
+      }
+
+      if (parsed.pathname.startsWith("/shorts/")) {
+        return parsed.pathname.split("/").filter(Boolean)[1] || "";
+      }
+
+      if (parsed.pathname.startsWith("/embed/")) {
+        return parsed.pathname.split("/").filter(Boolean)[1] || "";
+      }
+    }
+
+    return "";
+  } catch {
+    return "";
+  }
+}
+
 export default function AdminPanelPage() {
   const [activeSection, setActiveSection] = useState("home");
   const [documentId, setDocumentId] = useState("");
@@ -112,6 +151,8 @@ export default function AdminPanelPage() {
   const [galleryForm, setGalleryForm] = useState(createEmptyGalleryForm);
   const [blogForm, setBlogForm] = useState(createEmptyBlogForm);
   const [blogPosts, setBlogPosts] = useState([]);
+  const [programForm, setProgramForm] = useState(createEmptyProgramForm);
+  const [programs, setPrograms] = useState([]);
   const [testimonialForm, setTestimonialForm] = useState(
     createEmptyTestimonialForm,
   );
@@ -167,6 +208,22 @@ export default function AdminPanelPage() {
       name: typeof data.name === "string" ? data.name : "",
       image: typeof data.image === "string" ? data.image : "",
       text: typeof data.text === "string" ? data.text : "",
+    };
+  }, []);
+
+  const mapProgramDocToForm = useCallback((data) => {
+    const points = Array.isArray(data.importantPoints)
+      ? data.importantPoints
+          .filter((item) => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : [];
+
+    return {
+      title: typeof data.title === "string" ? data.title : "",
+      image: typeof data.image === "string" ? data.image : "",
+      mainText: typeof data.mainText === "string" ? data.mainText : "",
+      importantPoints: points.length ? points : [""],
     };
   }, []);
 
@@ -276,6 +333,7 @@ export default function AdminPanelPage() {
           Query.limit(
             activeSection === "about" ||
               activeSection === "blog" ||
+              activeSection === "programs" ||
               activeSection === "testimonials" ||
               activeSection === "responses" ||
               activeSection === "partnerResponses"
@@ -298,6 +356,8 @@ export default function AdminPanelPage() {
         setGalleryForm(createEmptyGalleryForm());
         setBlogForm(createEmptyBlogForm());
         setBlogPosts([]);
+        setProgramForm(createEmptyProgramForm());
+        setPrograms([]);
         setTestimonialForm(createEmptyTestimonialForm());
         setTestimonials([]);
         setContactResponses([]);
@@ -364,6 +424,7 @@ export default function AdminPanelPage() {
       if (activeSection === "blog") {
         const docs = result.documents;
         setBlogPosts(docs);
+        setPrograms([]);
         setTestimonials([]);
         setContactResponses([]);
         setPartnerResponses([]);
@@ -377,8 +438,26 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "programs") {
+        const docs = result.documents;
+        setPrograms(docs);
+        setBlogPosts([]);
+        setTestimonials([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+        const firstDoc = docs[0];
+        const cleanDoc = sanitizeDocument(firstDoc);
+        setDocumentId(firstDoc.$id);
+        setAboutRecordIds([]);
+        setEditorValue(JSON.stringify(cleanDoc, null, 2));
+        setProgramForm(mapProgramDocToForm(cleanDoc));
+        setStatus(`Loaded ${docs.length} program record(s).`);
+        return;
+      }
+
       if (activeSection === "testimonials") {
         const docs = result.documents;
+        setPrograms([]);
         setTestimonials(docs);
         setBlogPosts([]);
         setContactResponses([]);
@@ -396,6 +475,7 @@ export default function AdminPanelPage() {
       if (activeSection === "responses") {
         const docs = result.documents;
         const firstDoc = docs[0];
+        setPrograms([]);
         setContactResponses(docs);
         setTestimonials([]);
         setPartnerResponses([]);
@@ -412,6 +492,7 @@ export default function AdminPanelPage() {
       if (activeSection === "partnerResponses") {
         const docs = result.documents;
         const firstDoc = docs[0];
+        setPrograms([]);
         setPartnerResponses(docs);
         setTestimonials([]);
         setContactResponses([]);
@@ -430,6 +511,7 @@ export default function AdminPanelPage() {
       setDocumentId(doc.$id);
       setAboutRecordIds([doc.$id]);
       setBlogPosts([]);
+      setPrograms([]);
       setTestimonials([]);
       setContactResponses([]);
       setPartnerResponses([]);
@@ -448,6 +530,7 @@ export default function AdminPanelPage() {
     config.databaseId,
     databases,
     mapBlogDocToForm,
+    mapProgramDocToForm,
     mapTestimonialDocToForm,
   ]);
 
@@ -728,22 +811,50 @@ export default function AdminPanelPage() {
     setError("");
   }, []);
 
-  const handleTestimonialInputChange = useCallback((fieldKey, value) => {
-    setTestimonialForm((prev) => ({ ...prev, [fieldKey]: value }));
+  const handleProgramInputChange = useCallback((fieldKey, value) => {
+    setProgramForm((prev) => ({ ...prev, [fieldKey]: value }));
   }, []);
 
-  const handleTestimonialImageUpload = useCallback(
+  const handleProgramPointChange = useCallback((index, value) => {
+    setProgramForm((prev) => {
+      const nextPoints = [...(prev.importantPoints || [""])];
+      nextPoints[index] = value;
+      return { ...prev, importantPoints: nextPoints };
+    });
+  }, []);
+
+  const addProgramPointField = useCallback(() => {
+    setProgramForm((prev) => ({
+      ...prev,
+      importantPoints: [...(prev.importantPoints || []), ""],
+    }));
+  }, []);
+
+  const removeProgramPointField = useCallback((index) => {
+    setProgramForm((prev) => {
+      const nextPoints = (prev.importantPoints || []).filter(
+        (_, pointIndex) => pointIndex !== index,
+      );
+
+      return {
+        ...prev,
+        importantPoints: nextPoints.length ? nextPoints : [""],
+      };
+    });
+  }, []);
+
+  const handleProgramImageUpload = useCallback(
     async (file) => {
       if (!file) return;
 
       try {
         setError("");
-        setUploadingField("testimonial-image");
-        setStatus("Uploading testimonial image...");
+        setUploadingField("program-image");
+        setStatus("Uploading program image...");
 
         const imageUrl = await uploadToCloudinary(file);
-        setTestimonialForm((prev) => ({ ...prev, image: imageUrl }));
-        setStatus("Testimonial image uploaded.");
+        setProgramForm((prev) => ({ ...prev, image: imageUrl }));
+        setStatus("Program image uploaded.");
       } catch (uploadError) {
         setError(uploadError?.message || "Image upload failed.");
         setStatus("Upload failed.");
@@ -753,6 +864,43 @@ export default function AdminPanelPage() {
     },
     [uploadToCloudinary],
   );
+
+  const getProgramPayload = useCallback(
+    () => ({
+      title: (programForm.title || "").trim(),
+      image: (programForm.image || "").trim(),
+      mainText: (programForm.mainText || "").trim(),
+      importantPoints: (programForm.importantPoints || [])
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    }),
+    [programForm],
+  );
+
+  const handleSelectProgram = useCallback(
+    (doc) => {
+      const cleanDoc = sanitizeDocument(doc);
+      setDocumentId(doc.$id);
+      setEditorValue(JSON.stringify(cleanDoc, null, 2));
+      setProgramForm(mapProgramDocToForm(cleanDoc));
+      setStatus(`Editing program: ${cleanDoc.title || doc.$id}`);
+      setError("");
+    },
+    [mapProgramDocToForm],
+  );
+
+  const handleCreateNewProgram = useCallback(() => {
+    setDocumentId("");
+    setProgramForm(createEmptyProgramForm());
+    setEditorValue("{}");
+    setStatus("Creating a new program record.");
+    setError("");
+  }, []);
+
+  const handleTestimonialInputChange = useCallback((fieldKey, value) => {
+    setTestimonialForm((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
 
   const getTestimonialPayload = useCallback(
     () => ({
@@ -879,6 +1027,33 @@ export default function AdminPanelPage() {
             databases.deleteDocument(config.databaseId, collectionId, id),
           ),
         );
+      } else if (activeSection === "programs") {
+        await databases.deleteDocument(
+          config.databaseId,
+          collectionId,
+          documentId,
+        );
+
+        const remainingPrograms = programs.filter(
+          (item) => item.$id !== documentId,
+        );
+        setPrograms(remainingPrograms);
+
+        if (remainingPrograms.length) {
+          const nextDoc = remainingPrograms[0];
+          const cleanDoc = sanitizeDocument(nextDoc);
+          setDocumentId(nextDoc.$id);
+          setEditorValue(JSON.stringify(cleanDoc, null, 2));
+          setProgramForm(mapProgramDocToForm(cleanDoc));
+          setStatus("Program deleted. Loaded next record.");
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setProgramForm(createEmptyProgramForm());
+          setStatus("Program deleted. No records remaining.");
+        }
+
+        return;
       } else if (activeSection === "testimonials") {
         await databases.deleteDocument(
           config.databaseId,
@@ -997,6 +1172,8 @@ export default function AdminPanelPage() {
       setGalleryForm(createEmptyGalleryForm());
       setBlogForm(createEmptyBlogForm());
       setBlogPosts([]);
+      setProgramForm(createEmptyProgramForm());
+      setPrograms([]);
       setTestimonialForm(createEmptyTestimonialForm());
       setTestimonials([]);
       setContactResponses([]);
@@ -1018,10 +1195,12 @@ export default function AdminPanelPage() {
     databases,
     documentId,
     blogPosts,
+    programs,
     testimonials,
     contactResponses,
     partnerResponses,
     mapBlogDocToForm,
+    mapProgramDocToForm,
     mapTestimonialDocToForm,
   ]);
 
@@ -1153,6 +1332,63 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "programs") {
+        const programPayload = getProgramPayload();
+
+        if (
+          !programPayload.title ||
+          !programPayload.image ||
+          !programPayload.mainText ||
+          !programPayload.importantPoints.length
+        ) {
+          setError(
+            "Title, image, main text, and at least one important point are required.",
+          );
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (documentId && !replaceOnSave) {
+          await databases.updateDocument(
+            config.databaseId,
+            collectionId,
+            documentId,
+            programPayload,
+          );
+
+          setPrograms((prev) =>
+            prev.map((item) =>
+              item.$id === documentId ? { ...item, ...programPayload } : item,
+            ),
+          );
+          setStatus("Program updated successfully.");
+        } else {
+          if (documentId && replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+          }
+
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            programPayload,
+          );
+
+          setDocumentId(created.$id);
+          setPrograms((prev) => [
+            created,
+            ...prev.filter((item) => item.$id !== documentId),
+          ]);
+          setStatus("New program created successfully.");
+        }
+
+        return;
+      }
+
       if (activeSection === "testimonials") {
         const testimonialPayload = getTestimonialPayload();
 
@@ -1161,7 +1397,15 @@ export default function AdminPanelPage() {
           !testimonialPayload.image ||
           !testimonialPayload.text
         ) {
-          setError("Name, image, and text are required for testimonials.");
+          setError(
+            "Name, YouTube video URL, and testimonial text are required.",
+          );
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (!extractYouTubeVideoId(testimonialPayload.image)) {
+          setError("Enter a valid YouTube video URL.");
           setStatus("Save failed.");
           return;
         }
@@ -1271,6 +1515,7 @@ export default function AdminPanelPage() {
     getAboutPayloads,
     getGalleryPayload,
     getBlogPayload,
+    getProgramPayload,
     getTestimonialPayload,
     aboutRecordIds,
     replaceOnSave,
@@ -1309,6 +1554,8 @@ export default function AdminPanelPage() {
                   setGalleryForm(createEmptyGalleryForm());
                   setBlogForm(createEmptyBlogForm());
                   setBlogPosts([]);
+                  setProgramForm(createEmptyProgramForm());
+                  setPrograms([]);
                   setTestimonialForm(createEmptyTestimonialForm());
                   setTestimonials([]);
                   setContactResponses([]);
@@ -1401,8 +1648,8 @@ export default function AdminPanelPage() {
           {(activeSection === "home" ||
             activeSection === "about" ||
             activeSection === "gallery" ||
-            activeSection === "blog" ||
-            activeSection === "testimonials") &&
+            activeSection === "programs" ||
+            activeSection === "blog") &&
             isCloudinaryConfigMissing && (
               <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
                 Cloudinary config is incomplete. Add
@@ -2015,6 +2262,197 @@ export default function AdminPanelPage() {
                 </section>
               </div>
             </div>
+          ) : activeSection === "programs" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Programs Page Manager
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCreateNewProgram}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#63c37a] bg-white px-5 text-sm font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white"
+                >
+                  + Create New Program
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1d2238]">
+                      Existing Programs
+                    </p>
+                    <span className="rounded-full border border-[#dfe8df] bg-white px-2.5 py-1 text-xs font-semibold text-[#5f6879]">
+                      {programs.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {programs.length ? (
+                      programs.map((item) => {
+                        const isActive = item.$id === documentId;
+                        const programTitle =
+                          typeof item.title === "string" && item.title.trim()
+                            ? item.title
+                            : "Untitled Program";
+
+                        return (
+                          <button
+                            key={item.$id}
+                            type="button"
+                            onClick={() => handleSelectProgram(item)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-2 text-sm font-semibold text-[#1d2238]">
+                              {programTitle}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-xs text-[#5f6879]">
+                              {item.mainText || "No description"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No programs yet. Create your first one.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Program Title
+                    </label>
+                    <input
+                      type="text"
+                      value={programForm.title}
+                      onChange={(event) =>
+                        handleProgramInputChange("title", event.target.value)
+                      }
+                      placeholder="Enter program title"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Program Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={programForm.image}
+                      onChange={(event) =>
+                        handleProgramInputChange("image", event.target.value)
+                      }
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-[#63c37a] bg-white px-4 text-xs font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) =>
+                            handleProgramImageUpload(event.target.files?.[0])
+                          }
+                        />
+                        {uploadingField === "program-image"
+                          ? "Uploading..."
+                          : "Upload image"}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => handleProgramInputChange("image", "")}
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {programForm.image && (
+                      <img
+                        src={programForm.image}
+                        alt="Program"
+                        className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-[#0000000f]"
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Main Text
+                    </label>
+                    <textarea
+                      value={programForm.mainText}
+                      onChange={(event) =>
+                        handleProgramInputChange("mainText", event.target.value)
+                      }
+                      placeholder="Program description"
+                      className="min-h-36 w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                      spellCheck={false}
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-[#dbe3e7] bg-white p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <label className="block text-sm font-semibold text-[#1d2238]">
+                        Important Points
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addProgramPointField}
+                        className="inline-flex h-8 items-center justify-center rounded-full border border-[#63c37a] bg-white px-3 text-xs font-semibold text-[#63c37a] hover:bg-[#63c37a] hover:text-white"
+                      >
+                        Add point
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(programForm.importantPoints || []).map(
+                        (point, index) => (
+                          <div
+                            key={`program-point-${index}`}
+                            className="flex gap-2"
+                          >
+                            <input
+                              type="text"
+                              value={point}
+                              onChange={(event) =>
+                                handleProgramPointChange(
+                                  index,
+                                  event.target.value,
+                                )
+                              }
+                              placeholder={`Important point ${index + 1}`}
+                              className="flex-1 rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => removeProgramPointField(index)}
+                              disabled={
+                                (programForm.importantPoints || []).length <= 1
+                              }
+                              className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </section>
+              </div>
+            </div>
           ) : activeSection === "testimonials" ? (
             <div className="mt-6 space-y-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -2096,7 +2534,7 @@ export default function AdminPanelPage() {
 
                   <div>
                     <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
-                      Image URL
+                      YouTube Video URL
                     </label>
                     <input
                       type="url"
@@ -2107,44 +2545,27 @@ export default function AdminPanelPage() {
                           event.target.value,
                         )
                       }
-                      placeholder="https://..."
+                      placeholder="https://www.youtube.com/watch?v=..."
                       className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
                     />
 
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-[#63c37a] bg-white px-4 text-xs font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white">
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(event) =>
-                            handleTestimonialImageUpload(
-                              event.target.files?.[0],
-                            )
-                          }
-                        />
-                        {uploadingField === "testimonial-image"
-                          ? "Uploading..."
-                          : "Upload image"}
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          handleTestimonialInputChange("image", "")
-                        }
-                        className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
-                      >
-                        Clear
-                      </button>
-                    </div>
+                    <p className="mt-2 text-xs text-[#5f6879]">
+                      Paste a YouTube watch/share/embed URL.
+                    </p>
 
-                    {testimonialForm.image && (
-                      <img
-                        src={testimonialForm.image}
-                        alt="Testimonial"
-                        className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-[#0000000f]"
-                      />
-                    )}
+                    {testimonialForm.image &&
+                      extractYouTubeVideoId(testimonialForm.image) && (
+                        <div className="mt-3 overflow-hidden rounded-2xl border border-[#dbe3e7] bg-black">
+                          <iframe
+                            src={`https://www.youtube.com/embed/${extractYouTubeVideoId(testimonialForm.image)}`}
+                            title="Testimonial video preview"
+                            className="aspect-video w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            referrerPolicy="strict-origin-when-cross-origin"
+                            allowFullScreen
+                          />
+                        </div>
+                      )}
                   </div>
 
                   <div>
