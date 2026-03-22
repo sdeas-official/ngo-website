@@ -1,33 +1,44 @@
 "use client";
 
+import Link from "next/link";
 import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 
 const navItems = [
-  "Home",
-  "About",
-  "Programs",
-  "Gallery",
-  "Blog",
-  "Partner With Us",
-  "Contact",
+  { label: "Home", href: "/" },
+  { label: "About", href: "/about" },
+  { label: "Programs", href: "/programs" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Blog", href: "/blog" },
+  { label: "Partner With Us", href: "/partner-with-us" },
+  { label: "Contact", href: "/contact" },
 ];
 
-function getHref(item) {
-  if (item === "Home") return "/";
-  if (item === "About") return "/about";
-  if (item === "Programs") return "/programs";
-  if (item === "Gallery") return "/gallery";
-  if (item === "Blog") return "/blog";
-  if (item === "Partner With Us") return "/partner-with-us";
-  if (item === "Contact") return "/contact";
-  return "#";
+function normalizePath(path) {
+  if (!path) return "/";
+  const normalized =
+    path.endsWith("/") && path !== "/" ? path.slice(0, -1) : path;
+  return normalized.toLowerCase();
 }
 
 export default function Navbar() {
+  const pathname = normalizePath(usePathname());
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const isActiveNavItem = (href) => {
+    const normalizedHref = normalizePath(href);
+
+    if (href === "/") {
+      return pathname === "/";
+    }
+
+    return (
+      pathname === normalizedHref || pathname.startsWith(`${normalizedHref}/`)
+    );
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -45,7 +56,7 @@ export default function Navbar() {
       }`}
     >
       <nav className="relative flex h-20 w-full items-center justify-between px-4 md:h-24 md:px-8 lg:px-10">
-        <a
+        <Link
           href="/"
           className="flex items-center gap-3"
           aria-label="SDEAS Welfare Foundation Home"
@@ -58,19 +69,28 @@ export default function Navbar() {
             priority
             className="h-10 w-auto object-contain md:h-14"
           />
-        </a>
+        </Link>
 
-        <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-base font-medium text-[#576076] xl:flex">
-          {navItems.map((item) => (
-            <li key={item}>
-              <a
-                href={getHref(item)}
-                className="transition-colors hover:text-[#171a34]"
-              >
-                {item}
-              </a>
-            </li>
-          ))}
+        <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-base text-[#576076] xl:flex">
+          {navItems.map((item) => {
+            const isActive = isActiveNavItem(item.href);
+
+            return (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  aria-current={isActive ? "page" : undefined}
+                  className={`transition-colors hover:text-[#171a34] ${
+                    isActive
+                      ? "font-bold text-[#1d2238]"
+                      : "font-medium text-[#576076]"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            );
+          })}
         </ul>
 
         <button
@@ -100,18 +120,27 @@ export default function Navbar() {
 
       {isMobileMenuOpen && (
         <div className="border-t border-slate-100 bg-white px-4 py-4 shadow-sm xl:hidden">
-          <ul className="space-y-3 text-base font-medium text-[#576076]">
-            {navItems.map((item) => (
-              <li key={`mobile-${item}`}>
-                <a
-                  href={getHref(item)}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="block w-fit transition-colors hover:text-[#171a34]"
-                >
-                  {item}
-                </a>
-              </li>
-            ))}
+          <ul className="space-y-3 text-base text-[#576076]">
+            {navItems.map((item) => {
+              const isActive = isActiveNavItem(item.href);
+
+              return (
+                <li key={`mobile-${item.href}`}>
+                  <Link
+                    href={item.href}
+                    aria-current={isActive ? "page" : undefined}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`block w-fit transition-colors hover:text-[#171a34] ${
+                      isActive
+                        ? "font-bold text-[#1d2238]"
+                        : "font-medium text-[#576076]"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       )}

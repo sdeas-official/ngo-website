@@ -45,6 +45,7 @@ function extractYouTubeVideoId(url) {
 export default function Home() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
   const [activeProgramCard, setActiveProgramCard] = useState(0);
+  const [activeTestimonialVideo, setActiveTestimonialVideo] = useState(null);
 
   const programCards = [
     {
@@ -121,6 +122,25 @@ export default function Home() {
     loadTestimonials();
   }, [config.collections.testimonials, config.databaseId, databases]);
 
+  useEffect(() => {
+    if (!activeTestimonialVideo) return;
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setActiveTestimonialVideo(null);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [activeTestimonialVideo]);
+
   const renderTestimonialCard = (testimonial, index) => {
     const youtubeId = extractYouTubeVideoId(testimonial.image);
 
@@ -131,14 +151,29 @@ export default function Home() {
       >
         <div className="overflow-hidden rounded-2xl border border-[#dbe3e7] bg-black">
           {youtubeId ? (
-            <iframe
-              src={`https://www.youtube.com/embed/${youtubeId}`}
-              title={`${testimonial.name} testimonial`}
-              className="aspect-video w-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              referrerPolicy="strict-origin-when-cross-origin"
-              allowFullScreen
-            />
+            <button
+              type="button"
+              onClick={() =>
+                setActiveTestimonialVideo({
+                  youtubeId,
+                  title: `${testimonial.name} testimonial`,
+                })
+              }
+              className="group relative block aspect-video w-full cursor-pointer"
+              aria-label={`Play ${testimonial.name} testimonial video`}
+            >
+              <img
+                src={`https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`}
+                alt={`${testimonial.name} testimonial preview`}
+                className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                loading="lazy"
+                referrerPolicy="no-referrer"
+              />
+              <span className="absolute inset-0 bg-black/35 transition group-hover:bg-black/45" />
+              <span className="absolute left-1/2 top-1/2 inline-flex h-16 w-16 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 text-2xl text-[#1d2238] shadow-lg transition group-hover:scale-105">
+                ▶
+              </span>
+            </button>
           ) : (
             <div className="flex aspect-video items-center justify-center bg-[#0f172a] px-4 text-center text-sm font-medium text-white/85">
               Invalid YouTube URL
@@ -464,6 +499,38 @@ export default function Home() {
       <GetInTouchSection />
 
       <FooterSection />
+
+      {activeTestimonialVideo && (
+        <div
+          className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label={activeTestimonialVideo.title}
+          onClick={() => setActiveTestimonialVideo(null)}
+        >
+          <div
+            className="relative w-full max-w-4xl overflow-hidden rounded-2xl border border-white/20 bg-black shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setActiveTestimonialVideo(null)}
+              className="absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-lg text-white transition hover:bg-black/80"
+              aria-label="Close video"
+            >
+              ✕
+            </button>
+            <iframe
+              src={`https://www.youtube.com/embed/${activeTestimonialVideo.youtubeId}?autoplay=1&rel=0`}
+              title={activeTestimonialVideo.title}
+              className="aspect-video w-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allowFullScreen
+            />
+          </div>
+        </div>
+      )}
 
       <style jsx>{`
         @keyframes testimonial-scroll {
