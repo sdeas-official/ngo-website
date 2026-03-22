@@ -276,7 +276,7 @@ export default function Home() {
             >
               SDEAS Welfare Foundation actively collaborates with industries and
               corporate organizations to implement CSR initiatives focused on
-              skill development, youth empowerment, and community development.
+              skill development, youth empowermentt, and community development.
             </motion.p>
 
             <motion.a
