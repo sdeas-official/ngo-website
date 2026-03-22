@@ -364,7 +364,7 @@ export default function Home() {
 
       <OngoingProjectsCarousel />
 
-      <section className="bg-[#f7fdf8] py-14 md:py-24">
+      <section className="bg-white py-14 md:py-24">
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
@@ -380,7 +380,7 @@ export default function Home() {
           </div>
 
           {shouldUseTestimonialInfiniteScroll ? (
-            <div className="mask-[linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] mt-10 overflow-hidden">
+            <div className="mt-10 overflow-hidden">
               <div className="flex w-max animate-[testimonial-scroll_34s_linear_infinite] hover:[animation-play-state:paused]">
                 <div className="flex shrink-0 gap-5 pr-5">
                   {testimonials.map((testimonial, index) => (
