@@ -7,16 +7,19 @@ import { createDatabasesClient } from "../../lib/appwriteClient";
 
 const sections = [
   { key: "home", label: "Home Page" },
+  { key: "homePrograms", label: "Home: Our Programs" },
+  { key: "homeEvents", label: "Home: Events & Updates" },
   { key: "about", label: "About Us Page" },
   { key: "gallery", label: "Gallery Page" },
   { key: "blog", label: "Blog Page" },
   { key: "programs", label: "Programs Page" },
   { key: "testimonials", label: "Testimonials" },
+  { key: "partnerDonations", label: "Partner: Donations" },
   { key: "responses", label: "Responses" },
   { key: "partnerResponses", label: "Partner Requests" },
 ];
 
-const homeImageFields = [
+const homePrimaryImageFields = [
   { key: "HeroImage", label: "Hero Image" },
   { key: "BannerImageOne", label: "Banner Image One" },
   { key: "BannerImageTwo", label: "Banner Image Two" },
@@ -27,12 +30,41 @@ const homeImageFields = [
   { key: "OurMissionImageThree", label: "Our Mission Image Three" },
 ];
 
-const homeTextFields = [
+const homeSecondaryImageFields = [
+  { key: "ourProgrammsImage", label: "Our Programs Image" },
+  { key: "EventsImage", label: "Events & Updates Image" },
+];
+
+const homePrimaryTextFields = [
   { key: "AboutUsText", label: "About Us Text" },
   { key: "OurVisionText", label: "Our Vision Text" },
 ];
 
-const homeFormFields = [...homeImageFields, ...homeTextFields];
+const homeSecondaryTextFields = [
+  { key: "ourProgrammsTitle", label: "Our Programs Title" },
+  { key: "ourProgrammsText", label: "Our Programs Text" },
+  { key: "EventsHeading", label: "Events & Updates Heading" },
+  { key: "EventsText", label: "Events & Updates Text" },
+];
+
+const homeVideoFields = [{ key: "csrVideo", label: "CSR Video URL" }];
+
+const homeImageFields = [
+  ...homePrimaryImageFields,
+  ...homeSecondaryImageFields,
+];
+
+const homeTextFields = [...homePrimaryTextFields, ...homeSecondaryTextFields];
+
+const homePrimaryFields = [...homePrimaryImageFields, ...homePrimaryTextFields];
+
+const homeSecondaryFields = [
+  ...homeSecondaryImageFields,
+  ...homeSecondaryTextFields,
+  ...homeVideoFields,
+];
+
+const homeFormFields = [...homePrimaryFields, ...homeSecondaryFields];
 
 const aboutImageFields = [
   { key: "OurStoryImage", label: "Our Story Image" },
@@ -101,6 +133,25 @@ const createEmptyTestimonialForm = () => ({
   text: "",
 });
 
+const createEmptyHomeProgramEntryForm = () => ({
+  programTitle: "",
+  programDescription: "",
+  programImage: "",
+});
+
+const createEmptyHomeEventEntryForm = () => ({
+  EventsHeading: "",
+  EventsText: "",
+  EventsImage: "",
+});
+
+const createEmptyPartnerDonationForm = () => ({
+  donationTitle: "",
+  donationPrice: "",
+  donationBenefits: [""],
+  optimised: false,
+});
+
 function sanitizeDocument(data) {
   const clean = { ...data };
   delete clean.$id;
@@ -149,6 +200,7 @@ export default function AdminPanelPage() {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [activeSection, setActiveSection] = useState("home");
   const [documentId, setDocumentId] = useState("");
+  const [homeSecondaryDocumentId, setHomeSecondaryDocumentId] = useState("");
   const [editorValue, setEditorValue] = useState("{}");
   const [homeForm, setHomeForm] = useState(emptyHomeForm);
   const [aboutForm, setAboutForm] = useState(createEmptyAboutForm);
@@ -160,6 +212,18 @@ export default function AdminPanelPage() {
   const [testimonialForm, setTestimonialForm] = useState(
     createEmptyTestimonialForm,
   );
+  const [homeProgramEntryForm, setHomeProgramEntryForm] = useState(
+    createEmptyHomeProgramEntryForm,
+  );
+  const [homeEventEntryForm, setHomeEventEntryForm] = useState(
+    createEmptyHomeEventEntryForm,
+  );
+  const [homeProgramEntries, setHomeProgramEntries] = useState([]);
+  const [homeEventEntries, setHomeEventEntries] = useState([]);
+  const [partnerDonationForm, setPartnerDonationForm] = useState(
+    createEmptyPartnerDonationForm,
+  );
+  const [partnerDonationEntries, setPartnerDonationEntries] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [contactResponses, setContactResponses] = useState([]);
   const [partnerResponses, setPartnerResponses] = useState([]);
@@ -179,7 +243,18 @@ export default function AdminPanelPage() {
   const cloudinaryUploadPreset =
     process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
 
-  const collectionId = config.collections[activeSection];
+  const collectionId =
+    activeSection === "homePrograms"
+      ? config.collections.homeOurPrograms || "home_our_programs"
+      : activeSection === "homeEvents"
+        ? config.collections.homeEventsUpdates || "home_events_and_updates_"
+        : activeSection === "partnerDonations"
+          ? config.collections.partnerPage ||
+            config.collections.partnerResponses ||
+            ""
+          : config.collections[activeSection];
+  const homeSecondaryCollectionId =
+    config.collections.homeTwo || "home_page_two";
   const isConfigMissing =
     !config.endpoint ||
     !config.projectId ||
@@ -209,6 +284,34 @@ export default function AdminPanelPage() {
     [partnerResponses, documentId],
   );
 
+  const handleSectionSelect = useCallback((sectionKey) => {
+    setActiveSection(sectionKey);
+    setEditorValue("{}");
+    setHomeForm(emptyHomeForm);
+    setAboutForm(createEmptyAboutForm());
+    setGalleryForm(createEmptyGalleryForm());
+    setBlogForm(createEmptyBlogForm());
+    setBlogPosts([]);
+    setHomeProgramEntryForm(createEmptyHomeProgramEntryForm());
+    setHomeEventEntryForm(createEmptyHomeEventEntryForm());
+    setHomeProgramEntries([]);
+    setHomeEventEntries([]);
+    setPartnerDonationForm(createEmptyPartnerDonationForm());
+    setPartnerDonationEntries([]);
+    setProgramForm(createEmptyProgramForm());
+    setPrograms([]);
+    setTestimonialForm(createEmptyTestimonialForm());
+    setTestimonials([]);
+    setContactResponses([]);
+    setPartnerResponses([]);
+    setAboutRecordIds([]);
+    setDocumentId("");
+    setHomeSecondaryDocumentId("");
+    setReplaceOnSave(false);
+    setStatus("Ready");
+    setError("");
+  }, []);
+
   const mapTestimonialDocToForm = useCallback((data) => {
     return {
       name: typeof data.name === "string" ? data.name : "",
@@ -230,6 +333,84 @@ export default function AdminPanelPage() {
       image: typeof data.image === "string" ? data.image : "",
       mainText: typeof data.mainText === "string" ? data.mainText : "",
       importantPoints: points.length ? points : [""],
+    };
+  }, []);
+
+  const mapHomeProgramEntryToForm = useCallback((data) => {
+    return {
+      programTitle:
+        typeof data.programTitle === "string"
+          ? data.programTitle
+          : typeof data.ourProgrammsTitle === "string"
+            ? data.ourProgrammsTitle
+            : "",
+      programDescription:
+        typeof data.programDescription === "string"
+          ? data.programDescription
+          : typeof data.ourProgrammsText === "string"
+            ? data.ourProgrammsText
+            : "",
+      programImage:
+        typeof data.programImage === "string"
+          ? data.programImage
+          : typeof data.ourProgrammsImage === "string"
+            ? data.ourProgrammsImage
+            : "",
+    };
+  }, []);
+
+  const mapHomeEventEntryToForm = useCallback((data) => {
+    return {
+      EventsHeading:
+        typeof data.title === "string"
+          ? data.title
+          : typeof data.EventsHeading === "string"
+            ? data.EventsHeading
+            : "",
+      EventsText:
+        typeof data.text === "string"
+          ? data.text
+          : typeof data.EventsText === "string"
+            ? data.EventsText
+            : "",
+      EventsImage:
+        typeof data.image === "string"
+          ? data.image
+          : typeof data.EventsImage === "string"
+            ? data.EventsImage
+            : "",
+    };
+  }, []);
+
+  const mapPartnerDonationDocToForm = useCallback((data) => {
+    const benefits = Array.isArray(data.donationBenefits)
+      ? data.donationBenefits
+          .filter((item) => typeof item === "string")
+          .map((item) => item.trim())
+          .filter(Boolean)
+      : typeof data.donationBenefits === "string"
+        ? data.donationBenefits
+            .split(/\r?\n|,|\|/)
+            .map((item) => item.trim())
+            .filter(Boolean)
+        : [];
+
+    return {
+      donationTitle:
+        typeof data.donationTitle === "string" ? data.donationTitle : "",
+      donationPrice:
+        typeof data.donationPrice === "number"
+          ? String(data.donationPrice)
+          : typeof data.donationPrice === "string"
+            ? data.donationPrice
+            : "",
+      donationBenefits: benefits.length ? benefits : [""],
+      optimised:
+        typeof data.optimised === "boolean"
+          ? data.optimised
+          : typeof data.best === "boolean"
+            ? data.best
+            : false,
     };
   }, []);
 
@@ -340,6 +521,9 @@ export default function AdminPanelPage() {
             activeSection === "about" ||
               activeSection === "blog" ||
               activeSection === "programs" ||
+              activeSection === "homePrograms" ||
+              activeSection === "homeEvents" ||
+              activeSection === "partnerDonations" ||
               activeSection === "testimonials" ||
               activeSection === "responses" ||
               activeSection === "partnerResponses"
@@ -354,7 +538,38 @@ export default function AdminPanelPage() {
       );
 
       if (!result.documents.length) {
+        if (activeSection === "home" && homeSecondaryCollectionId) {
+          try {
+            const secondaryResult = await databases.listDocuments(
+              config.databaseId,
+              homeSecondaryCollectionId,
+              [Query.orderDesc("$createdAt"), Query.limit(1)],
+            );
+
+            const secondaryDoc = secondaryResult.documents?.[0];
+            if (secondaryDoc) {
+              const secondaryData = sanitizeDocument(secondaryDoc);
+              setDocumentId("");
+              setHomeSecondaryDocumentId(secondaryDoc.$id);
+              setAboutRecordIds([]);
+              setBlogPosts([]);
+              setPrograms([]);
+              setTestimonials([]);
+              setContactResponses([]);
+              setPartnerResponses([]);
+              applyLoadedData(secondaryData);
+              setStatus(
+                `Loaded secondary home document: ${secondaryDoc.$id} (primary table is empty).`,
+              );
+              return;
+            }
+          } catch {
+            // fall through to default empty state
+          }
+        }
+
         setDocumentId("");
+        setHomeSecondaryDocumentId("");
         setAboutRecordIds([]);
         setEditorValue("{}");
         setHomeForm(emptyHomeForm);
@@ -362,6 +577,12 @@ export default function AdminPanelPage() {
         setGalleryForm(createEmptyGalleryForm());
         setBlogForm(createEmptyBlogForm());
         setBlogPosts([]);
+        setHomeProgramEntryForm(createEmptyHomeProgramEntryForm());
+        setHomeEventEntryForm(createEmptyHomeEventEntryForm());
+        setHomeProgramEntries([]);
+        setHomeEventEntries([]);
+        setPartnerDonationForm(createEmptyPartnerDonationForm());
+        setPartnerDonationEntries([]);
         setProgramForm(createEmptyProgramForm());
         setPrograms([]);
         setTestimonialForm(createEmptyTestimonialForm());
@@ -369,6 +590,47 @@ export default function AdminPanelPage() {
         setContactResponses([]);
         setPartnerResponses([]);
         setStatus("No document found in this collection.");
+        return;
+      }
+
+      if (activeSection === "home") {
+        const homeDoc = result.documents[0];
+        const homeData = sanitizeDocument(homeDoc);
+        let mergedHomeData = { ...homeData };
+
+        setDocumentId(homeDoc.$id);
+        setHomeSecondaryDocumentId("");
+        setAboutRecordIds([homeDoc.$id]);
+        setBlogPosts([]);
+        setPrograms([]);
+        setTestimonials([]);
+        setPartnerDonationEntries([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+
+        if (homeSecondaryCollectionId) {
+          try {
+            const secondaryResult = await databases.listDocuments(
+              config.databaseId,
+              homeSecondaryCollectionId,
+              [Query.orderDesc("$createdAt"), Query.limit(1)],
+            );
+
+            const secondaryDoc = secondaryResult.documents?.[0];
+            if (secondaryDoc) {
+              setHomeSecondaryDocumentId(secondaryDoc.$id);
+              mergedHomeData = {
+                ...mergedHomeData,
+                ...sanitizeDocument(secondaryDoc),
+              };
+            }
+          } catch {
+            // keep primary home data if secondary table is unavailable
+          }
+        }
+
+        applyLoadedData(mergedHomeData);
+        setStatus(`Loaded document: ${homeDoc.$id}`);
         return;
       }
 
@@ -434,6 +696,7 @@ export default function AdminPanelPage() {
         setTestimonials([]);
         setContactResponses([]);
         setPartnerResponses([]);
+        setPartnerDonationEntries([]);
         const firstDoc = docs[0];
         const cleanDoc = sanitizeDocument(firstDoc);
         setDocumentId(firstDoc.$id);
@@ -451,6 +714,7 @@ export default function AdminPanelPage() {
         setTestimonials([]);
         setContactResponses([]);
         setPartnerResponses([]);
+        setPartnerDonationEntries([]);
         const firstDoc = docs[0];
         const cleanDoc = sanitizeDocument(firstDoc);
         setDocumentId(firstDoc.$id);
@@ -478,12 +742,86 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "homePrograms") {
+        const docs = result.documents
+          .filter(
+            (doc) =>
+              typeof doc.programImage === "string" ||
+              typeof doc.programDescription === "string" ||
+              typeof doc.programTitle === "string",
+          )
+          .slice(0, 3);
+
+        setHomeProgramEntries(docs);
+        setHomeEventEntries([]);
+        setPrograms([]);
+        setTestimonials([]);
+        setBlogPosts([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+        setPartnerDonationEntries([]);
+
+        const firstDoc = docs[0] || result.documents[0];
+        if (firstDoc) {
+          const cleanDoc = sanitizeDocument(firstDoc);
+          setDocumentId(firstDoc.$id);
+          setEditorValue(JSON.stringify(cleanDoc, null, 2));
+          setHomeProgramEntryForm(mapHomeProgramEntryToForm(cleanDoc));
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setHomeProgramEntryForm(createEmptyHomeProgramEntryForm());
+        }
+
+        setStatus(`Loaded ${result.documents.length} Home Programs record(s).`);
+        return;
+      }
+
+      if (activeSection === "homeEvents") {
+        const docs = result.documents.filter(
+          (doc) =>
+            typeof doc.image === "string" ||
+            typeof doc.text === "string" ||
+            typeof doc.title === "string" ||
+            typeof doc.EventsImage === "string" ||
+            typeof doc.EventsText === "string" ||
+            typeof doc.EventsHeading === "string",
+        );
+
+        setHomeEventEntries(docs);
+        setHomeProgramEntries([]);
+        setPrograms([]);
+        setTestimonials([]);
+        setBlogPosts([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+        setPartnerDonationEntries([]);
+
+        const firstDoc = docs[0] || result.documents[0];
+        if (firstDoc) {
+          const cleanDoc = sanitizeDocument(firstDoc);
+          setDocumentId(firstDoc.$id);
+          setEditorValue(JSON.stringify(cleanDoc, null, 2));
+          setHomeEventEntryForm(mapHomeEventEntryToForm(cleanDoc));
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setHomeEventEntryForm(createEmptyHomeEventEntryForm());
+        }
+
+        setStatus(
+          `Loaded ${result.documents.length} Events & Updates record(s).`,
+        );
+        return;
+      }
+
       if (activeSection === "responses") {
         const docs = result.documents;
         const firstDoc = docs[0];
         setPrograms([]);
         setContactResponses(docs);
         setTestimonials([]);
+        setPartnerDonationEntries([]);
         setPartnerResponses([]);
         setBlogPosts([]);
         setAboutRecordIds([]);
@@ -501,6 +839,7 @@ export default function AdminPanelPage() {
         setPrograms([]);
         setPartnerResponses(docs);
         setTestimonials([]);
+        setPartnerDonationEntries([]);
         setContactResponses([]);
         setBlogPosts([]);
         setAboutRecordIds([]);
@@ -512,6 +851,38 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "partnerDonations") {
+        const docs = result.documents.filter(
+          (doc) =>
+            typeof doc.donationTitle === "string" ||
+            typeof doc.donationPrice === "number" ||
+            typeof doc.donationPrice === "string" ||
+            Array.isArray(doc.donationBenefits),
+        );
+
+        setPartnerDonationEntries(docs);
+        setPrograms([]);
+        setTestimonials([]);
+        setBlogPosts([]);
+        setContactResponses([]);
+        setPartnerResponses([]);
+
+        const firstDoc = docs[0] || result.documents[0];
+        if (firstDoc) {
+          const cleanDoc = sanitizeDocument(firstDoc);
+          setDocumentId(firstDoc.$id);
+          setEditorValue(JSON.stringify(cleanDoc, null, 2));
+          setPartnerDonationForm(mapPartnerDonationDocToForm(cleanDoc));
+        } else {
+          setDocumentId("");
+          setEditorValue("{}");
+          setPartnerDonationForm(createEmptyPartnerDonationForm());
+        }
+
+        setStatus(`Loaded ${result.documents.length} donation option(s).`);
+        return;
+      }
+
       const doc = result.documents[0];
       const cleanDoc = sanitizeDocument(doc);
       setDocumentId(doc.$id);
@@ -519,6 +890,7 @@ export default function AdminPanelPage() {
       setBlogPosts([]);
       setPrograms([]);
       setTestimonials([]);
+      setPartnerDonationEntries([]);
       setContactResponses([]);
       setPartnerResponses([]);
       applyLoadedData(cleanDoc);
@@ -535,7 +907,11 @@ export default function AdminPanelPage() {
     collectionId,
     config.databaseId,
     databases,
+    homeSecondaryCollectionId,
     mapBlogDocToForm,
+    mapHomeEventEntryToForm,
+    mapHomeProgramEntryToForm,
+    mapPartnerDonationDocToForm,
     mapProgramDocToForm,
     mapTestimonialDocToForm,
   ]);
@@ -901,6 +1277,172 @@ export default function AdminPanelPage() {
     setProgramForm(createEmptyProgramForm());
     setEditorValue("{}");
     setStatus("Creating a new program record.");
+    setError("");
+  }, []);
+
+  const handleHomeProgramEntryInputChange = useCallback((fieldKey, value) => {
+    setHomeProgramEntryForm((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
+
+  const handleHomeProgramImageUpload = useCallback(
+    async (file) => {
+      if (!file) return;
+
+      try {
+        setError("");
+        setUploadingField("home-program-image");
+        setStatus("Uploading home program image...");
+
+        const imageUrl = await uploadToCloudinary(file);
+        setHomeProgramEntryForm((prev) => ({
+          ...prev,
+          programImage: imageUrl,
+        }));
+        setStatus("Home program image uploaded.");
+      } catch (uploadError) {
+        setError(uploadError?.message || "Image upload failed.");
+        setStatus("Upload failed.");
+      } finally {
+        setUploadingField("");
+      }
+    },
+    [uploadToCloudinary],
+  );
+
+  const handleSelectHomeProgramEntry = useCallback(
+    (doc) => {
+      const cleanDoc = sanitizeDocument(doc);
+      setDocumentId(doc.$id);
+      setEditorValue(JSON.stringify(cleanDoc, null, 2));
+      setHomeProgramEntryForm(mapHomeProgramEntryToForm(cleanDoc));
+      setStatus(
+        `Editing home program: ${cleanDoc.ourProgrammsTitle || doc.$id}`,
+      );
+      setError("");
+    },
+    [mapHomeProgramEntryToForm],
+  );
+
+  const handleCreateNewHomeProgramEntry = useCallback(() => {
+    setDocumentId("");
+    setHomeProgramEntryForm(createEmptyHomeProgramEntryForm());
+    setEditorValue("{}");
+    setStatus("Creating a new Home Programs entry.");
+    setError("");
+  }, []);
+
+  const handleHomeEventEntryInputChange = useCallback((fieldKey, value) => {
+    setHomeEventEntryForm((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
+
+  const handleHomeEventImageUpload = useCallback(
+    async (file) => {
+      if (!file) return;
+
+      try {
+        setError("");
+        setUploadingField("home-event-image");
+        setStatus("Uploading event image...");
+
+        const imageUrl = await uploadToCloudinary(file);
+        setHomeEventEntryForm((prev) => ({ ...prev, EventsImage: imageUrl }));
+        setStatus("Event image uploaded.");
+      } catch (uploadError) {
+        setError(uploadError?.message || "Image upload failed.");
+        setStatus("Upload failed.");
+      } finally {
+        setUploadingField("");
+      }
+    },
+    [uploadToCloudinary],
+  );
+
+  const handleSelectHomeEventEntry = useCallback(
+    (doc) => {
+      const cleanDoc = sanitizeDocument(doc);
+      setDocumentId(doc.$id);
+      setEditorValue(JSON.stringify(cleanDoc, null, 2));
+      setHomeEventEntryForm(mapHomeEventEntryToForm(cleanDoc));
+      setStatus(
+        `Editing event: ${cleanDoc.title || cleanDoc.EventsHeading || doc.$id}`,
+      );
+      setError("");
+    },
+    [mapHomeEventEntryToForm],
+  );
+
+  const handleCreateNewHomeEventEntry = useCallback(() => {
+    setDocumentId("");
+    setHomeEventEntryForm(createEmptyHomeEventEntryForm());
+    setEditorValue("{}");
+    setStatus("Creating a new Events & Updates entry.");
+    setError("");
+  }, []);
+
+  const handlePartnerDonationInputChange = useCallback((fieldKey, value) => {
+    setPartnerDonationForm((prev) => ({ ...prev, [fieldKey]: value }));
+  }, []);
+
+  const handlePartnerDonationBenefitChange = useCallback((index, value) => {
+    setPartnerDonationForm((prev) => {
+      const nextBenefits = [...(prev.donationBenefits || [""])];
+      nextBenefits[index] = value;
+      return { ...prev, donationBenefits: nextBenefits };
+    });
+  }, []);
+
+  const addPartnerDonationBenefitField = useCallback(() => {
+    setPartnerDonationForm((prev) => ({
+      ...prev,
+      donationBenefits: [...(prev.donationBenefits || []), ""],
+    }));
+  }, []);
+
+  const removePartnerDonationBenefitField = useCallback((index) => {
+    setPartnerDonationForm((prev) => {
+      const nextBenefits = (prev.donationBenefits || []).filter(
+        (_, benefitIndex) => benefitIndex !== index,
+      );
+
+      return {
+        ...prev,
+        donationBenefits: nextBenefits.length ? nextBenefits : [""],
+      };
+    });
+  }, []);
+
+  const getPartnerDonationPayload = useCallback(
+    () => ({
+      donationTitle: (partnerDonationForm.donationTitle || "").trim(),
+      donationPrice: Number(partnerDonationForm.donationPrice || 0),
+      donationBenefits: (partnerDonationForm.donationBenefits || [])
+        .filter((item) => typeof item === "string")
+        .map((item) => item.trim())
+        .filter(Boolean),
+      best: Boolean(partnerDonationForm.optimised),
+    }),
+    [partnerDonationForm],
+  );
+
+  const handleSelectPartnerDonation = useCallback(
+    (doc) => {
+      const cleanDoc = sanitizeDocument(doc);
+      setDocumentId(doc.$id);
+      setEditorValue(JSON.stringify(cleanDoc, null, 2));
+      setPartnerDonationForm(mapPartnerDonationDocToForm(cleanDoc));
+      setStatus(
+        `Editing donation option: ${cleanDoc.donationTitle || doc.$id}`,
+      );
+      setError("");
+    },
+    [mapPartnerDonationDocToForm],
+  );
+
+  const handleCreateNewPartnerDonation = useCallback(() => {
+    setDocumentId("");
+    setPartnerDonationForm(createEmptyPartnerDonationForm());
+    setEditorValue("{}");
+    setStatus("Creating a new donation option.");
     setError("");
   }, []);
 
@@ -1459,12 +2001,279 @@ export default function AdminPanelPage() {
         return;
       }
 
+      if (activeSection === "homePrograms") {
+        const title = (homeProgramEntryForm.programTitle || "").trim();
+        const description = (
+          homeProgramEntryForm.programDescription || ""
+        ).trim();
+        const image = (homeProgramEntryForm.programImage || "").trim();
+
+        if (!title || !description || !image) {
+          setError("Program title, description, and image are required.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (homeProgramEntries.length >= 3 && !documentId) {
+          setError("Maximum 3 programs allowed. Delete one to add more.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        const payload = {
+          programTitle: title,
+          programDescription: description,
+          programImage: image,
+        };
+
+        if (documentId && !replaceOnSave) {
+          await databases.updateDocument(
+            config.databaseId,
+            collectionId,
+            documentId,
+            payload,
+          );
+          setHomeProgramEntries((prev) =>
+            prev.map((item) =>
+              item.$id === documentId ? { ...item, ...payload } : item,
+            ),
+          );
+          setStatus("Home Programs entry updated successfully.");
+        } else {
+          if (documentId && replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+          }
+
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            payload,
+          );
+          setDocumentId(created.$id);
+          setHomeProgramEntries((prev) => [
+            created,
+            ...prev.filter((item) => item.$id !== documentId),
+          ]);
+          setStatus("New Home Programs entry created successfully.");
+        }
+
+        return;
+      }
+
+      if (activeSection === "homeEvents") {
+        const heading = (homeEventEntryForm.EventsHeading || "").trim();
+        const text = (homeEventEntryForm.EventsText || "").trim();
+        const image = (homeEventEntryForm.EventsImage || "").trim();
+
+        if (!heading || !text || !image) {
+          setError("Event heading, image, and text are required.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        const payload = {
+          title: heading,
+          text,
+          image,
+        };
+
+        if (documentId && !replaceOnSave) {
+          await databases.updateDocument(
+            config.databaseId,
+            collectionId,
+            documentId,
+            payload,
+          );
+          setHomeEventEntries((prev) =>
+            prev.map((item) =>
+              item.$id === documentId ? { ...item, ...payload } : item,
+            ),
+          );
+          setStatus("Events & Updates entry updated successfully.");
+        } else {
+          if (documentId && replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+          }
+
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            payload,
+          );
+          setDocumentId(created.$id);
+          setHomeEventEntries((prev) => [
+            created,
+            ...prev.filter((item) => item.$id !== documentId),
+          ]);
+          setStatus("New Events & Updates entry created successfully.");
+        }
+
+        return;
+      }
+
+      if (activeSection === "partnerDonations") {
+        const payload = getPartnerDonationPayload();
+
+        if (!payload.donationTitle) {
+          setError("Donation title is required.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (
+          !Number.isFinite(payload.donationPrice) ||
+          payload.donationPrice <= 0
+        ) {
+          setError("Donation price must be a number greater than 0.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (!payload.donationBenefits.length) {
+          setError("Add at least one donation benefit.");
+          setStatus("Save failed.");
+          return;
+        }
+
+        if (documentId && !replaceOnSave) {
+          await databases.updateDocument(
+            config.databaseId,
+            collectionId,
+            documentId,
+            payload,
+          );
+          setPartnerDonationEntries((prev) =>
+            prev.map((item) =>
+              item.$id === documentId ? { ...item, ...payload } : item,
+            ),
+          );
+          setStatus("Donation option updated successfully.");
+        } else {
+          if (documentId && replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+          }
+
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            payload,
+          );
+          setDocumentId(created.$id);
+          setPartnerDonationEntries((prev) => [
+            created,
+            ...prev.filter((item) => item.$id !== documentId),
+          ]);
+          setStatus("New donation option created successfully.");
+        }
+
+        return;
+      }
+
+      if (activeSection === "home") {
+        const homePrimaryPayload = homePrimaryFields.reduce((acc, field) => {
+          acc[field.key] = homeForm[field.key] || "";
+          return acc;
+        }, {});
+
+        const homeSecondaryPayload = homeSecondaryFields.reduce(
+          (acc, field) => {
+            acc[field.key] = homeForm[field.key] || "";
+            return acc;
+          },
+          {},
+        );
+
+        if (documentId) {
+          if (replaceOnSave) {
+            await databases.deleteDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+            );
+
+            const created = await databases.createDocument(
+              config.databaseId,
+              collectionId,
+              ID.unique(),
+              homePrimaryPayload,
+            );
+            setDocumentId(created.$id);
+          } else {
+            await databases.updateDocument(
+              config.databaseId,
+              collectionId,
+              documentId,
+              homePrimaryPayload,
+            );
+          }
+        } else {
+          const created = await databases.createDocument(
+            config.databaseId,
+            collectionId,
+            ID.unique(),
+            homePrimaryPayload,
+          );
+          setDocumentId(created.$id);
+        }
+
+        if (homeSecondaryCollectionId) {
+          if (homeSecondaryDocumentId) {
+            if (replaceOnSave) {
+              await databases.deleteDocument(
+                config.databaseId,
+                homeSecondaryCollectionId,
+                homeSecondaryDocumentId,
+              );
+
+              const created = await databases.createDocument(
+                config.databaseId,
+                homeSecondaryCollectionId,
+                ID.unique(),
+                homeSecondaryPayload,
+              );
+              setHomeSecondaryDocumentId(created.$id);
+            } else {
+              await databases.updateDocument(
+                config.databaseId,
+                homeSecondaryCollectionId,
+                homeSecondaryDocumentId,
+                homeSecondaryPayload,
+              );
+            }
+          } else {
+            const created = await databases.createDocument(
+              config.databaseId,
+              homeSecondaryCollectionId,
+              ID.unique(),
+              homeSecondaryPayload,
+            );
+            setHomeSecondaryDocumentId(created.$id);
+          }
+        }
+
+        setStatus("Saved successfully.");
+        return;
+      }
+
       const parsed =
-        activeSection === "home"
-          ? homeForm
-          : activeSection === "gallery"
-            ? getGalleryPayload()
-            : JSON.parse(editorValue);
+        activeSection === "gallery"
+          ? getGalleryPayload()
+          : JSON.parse(editorValue);
 
       if (documentId) {
         if (replaceOnSave) {
@@ -1517,10 +2326,19 @@ export default function AdminPanelPage() {
     databases,
     documentId,
     editorValue,
+    homeSecondaryCollectionId,
+    homeSecondaryDocumentId,
+    homeEventEntries,
+    homeEventEntryForm,
     homeForm,
+    partnerDonationForm,
+    partnerDonationEntries,
+    homeProgramEntries,
+    homeProgramEntryForm,
     getAboutPayloads,
     getGalleryPayload,
     getBlogPayload,
+    getPartnerDonationPayload,
     getProgramPayload,
     getTestimonialPayload,
     aboutRecordIds,
@@ -1600,6 +2418,17 @@ export default function AdminPanelPage() {
     return null;
   }
 
+  const homeMainSection = sections.find((section) => section.key === "home");
+  const homeChildSections = sections.filter(
+    (section) => section.key === "homePrograms" || section.key === "homeEvents",
+  );
+  const otherSections = sections.filter(
+    (section) =>
+      section.key !== "home" &&
+      section.key !== "homePrograms" &&
+      section.key !== "homeEvents",
+  );
+
   return (
     <div className="min-h-screen bg-linear-to-b from-[#f3faf5] via-[#f8faf8] to-[#edf3ef] text-[#1d2238]">
       <div className="mx-auto flex w-full max-w-350 flex-col px-4 py-6 md:px-8 lg:flex-row lg:gap-6 lg:px-10">
@@ -1615,30 +2444,44 @@ export default function AdminPanelPage() {
           </p>
 
           <nav className="mt-6 space-y-2.5">
-            {sections.map((section) => (
+            {homeMainSection ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => handleSectionSelect(homeMainSection.key)}
+                  className={`w-full rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition-all duration-200 ${
+                    activeSection === homeMainSection.key
+                      ? "border-[#63c37a] bg-[#63c37a] text-white shadow-[0_8px_18px_rgba(99,195,122,0.35)]"
+                      : "border-[#e4ebee] bg-[#f8fbfa] text-[#576076] hover:border-[#63c37a59] hover:bg-[#eef8f0]"
+                  }`}
+                >
+                  {homeMainSection.label}
+                </button>
+
+                <div className="space-y-2 pl-4">
+                  {homeChildSections.map((section) => (
+                    <button
+                      key={section.key}
+                      type="button"
+                      onClick={() => handleSectionSelect(section.key)}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition-all duration-200 ${
+                        activeSection === section.key
+                          ? "border-[#63c37a] bg-[#63c37a] text-white shadow-[0_8px_18px_rgba(99,195,122,0.35)]"
+                          : "border-[#e4ebee] bg-[#f8fbfa] text-[#576076] hover:border-[#63c37a59] hover:bg-[#eef8f0]"
+                      }`}
+                    >
+                      {section.label.replace("Home: ", "")}
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {otherSections.map((section) => (
               <button
                 key={section.key}
                 type="button"
-                onClick={() => {
-                  setActiveSection(section.key);
-                  setEditorValue("{}");
-                  setHomeForm(emptyHomeForm);
-                  setAboutForm(createEmptyAboutForm());
-                  setGalleryForm(createEmptyGalleryForm());
-                  setBlogForm(createEmptyBlogForm());
-                  setBlogPosts([]);
-                  setProgramForm(createEmptyProgramForm());
-                  setPrograms([]);
-                  setTestimonialForm(createEmptyTestimonialForm());
-                  setTestimonials([]);
-                  setContactResponses([]);
-                  setPartnerResponses([]);
-                  setAboutRecordIds([]);
-                  setDocumentId("");
-                  setReplaceOnSave(false);
-                  setStatus("Ready");
-                  setError("");
-                }}
+                onClick={() => handleSectionSelect(section.key)}
                 className={`w-full rounded-2xl border px-4 py-3.5 text-left text-sm font-semibold transition-all duration-200 ${
                   activeSection === section.key
                     ? "border-[#63c37a] bg-[#63c37a] text-white shadow-[0_8px_18px_rgba(99,195,122,0.35)]"
@@ -1729,6 +2572,8 @@ export default function AdminPanelPage() {
           )}
 
           {(activeSection === "home" ||
+            activeSection === "homePrograms" ||
+            activeSection === "homeEvents" ||
             activeSection === "about" ||
             activeSection === "gallery" ||
             activeSection === "programs" ||
@@ -1841,6 +2686,355 @@ export default function AdminPanelPage() {
                     />
                   </div>
                 ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4">
+                {homeVideoFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]"
+                  >
+                    <div className="mb-2 flex items-center justify-between gap-3">
+                      <label className="block text-sm font-semibold text-[#1d2238]">
+                        {field.label}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => clearHomeField(field.key)}
+                        className="inline-flex h-8 items-center justify-center rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    <input
+                      type="url"
+                      value={homeForm[field.key] || ""}
+                      onChange={(event) =>
+                        handleHomeInputChange(field.key, event.target.value)
+                      }
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : activeSection === "homePrograms" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Home: Our Programs Manager
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCreateNewHomeProgramEntry}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#63c37a] bg-white px-5 text-sm font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white"
+                >
+                  + Create New Entry
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1d2238]">
+                      Existing Entries
+                    </p>
+                    <span className="rounded-full border border-[#dfe8df] bg-white px-2.5 py-1 text-xs font-semibold text-[#5f6879]">
+                      {homeProgramEntries.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {homeProgramEntries.length ? (
+                      homeProgramEntries.map((item) => {
+                        const isActive = item.$id === documentId;
+                        const title =
+                          typeof item.programTitle === "string" &&
+                          item.programTitle.trim()
+                            ? item.programTitle
+                            : typeof item.ourProgrammsTitle === "string" &&
+                                item.ourProgrammsTitle.trim()
+                              ? item.ourProgrammsTitle
+                              : "Untitled Program Entry";
+
+                        return (
+                          <button
+                            key={item.$id}
+                            type="button"
+                            onClick={() => handleSelectHomeProgramEntry(item)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-2 text-sm font-semibold text-[#1d2238]">
+                              {title}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-xs text-[#5f6879]">
+                              {item.programDescription ||
+                                item.ourProgrammsText ||
+                                "No description"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No entries yet. Create your first one.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Program Title
+                    </label>
+                    <input
+                      type="text"
+                      value={homeProgramEntryForm.programTitle}
+                      onChange={(event) =>
+                        handleHomeProgramEntryInputChange(
+                          "programTitle",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Enter program title"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Program Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={homeProgramEntryForm.programImage}
+                      onChange={(event) =>
+                        handleHomeProgramEntryInputChange(
+                          "programImage",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-[#63c37a] bg-white px-4 text-xs font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) =>
+                            handleHomeProgramImageUpload(
+                              event.target.files?.[0],
+                            )
+                          }
+                        />
+                        {uploadingField === "home-program-image"
+                          ? "Uploading..."
+                          : "Upload image"}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleHomeProgramEntryInputChange("programImage", "")
+                        }
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {homeProgramEntryForm.programImage && (
+                      <img
+                        src={homeProgramEntryForm.programImage}
+                        alt="Home Program"
+                        className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-[#0000000f]"
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Program Text
+                    </label>
+                    <textarea
+                      value={homeProgramEntryForm.programDescription}
+                      onChange={(event) =>
+                        handleHomeProgramEntryInputChange(
+                          "programDescription",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Program description"
+                      className="min-h-36 w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                      spellCheck={false}
+                    />
+                  </div>
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "homeEvents" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Home: Events & Updates Manager
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCreateNewHomeEventEntry}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#63c37a] bg-white px-5 text-sm font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white"
+                >
+                  + Create New Entry
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1d2238]">
+                      Existing Entries
+                    </p>
+                    <span className="rounded-full border border-[#dfe8df] bg-white px-2.5 py-1 text-xs font-semibold text-[#5f6879]">
+                      {homeEventEntries.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {homeEventEntries.length ? (
+                      homeEventEntries.map((item) => {
+                        const isActive = item.$id === documentId;
+                        const heading =
+                          typeof item.title === "string" && item.title.trim()
+                            ? item.title
+                            : typeof item.EventsHeading === "string" &&
+                                item.EventsHeading.trim()
+                              ? item.EventsHeading
+                              : "Untitled Event Entry";
+
+                        return (
+                          <button
+                            key={item.$id}
+                            type="button"
+                            onClick={() => handleSelectHomeEventEntry(item)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <p className="line-clamp-2 text-sm font-semibold text-[#1d2238]">
+                              {heading}
+                            </p>
+                            <p className="mt-1 line-clamp-2 text-xs text-[#5f6879]">
+                              {item.text || item.EventsText || "No description"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No entries yet. Create your first one.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Event Heading
+                    </label>
+                    <input
+                      type="text"
+                      value={homeEventEntryForm.EventsHeading}
+                      onChange={(event) =>
+                        handleHomeEventEntryInputChange(
+                          "EventsHeading",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Enter event heading"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Event Image URL
+                    </label>
+                    <input
+                      type="url"
+                      value={homeEventEntryForm.EventsImage}
+                      onChange={(event) =>
+                        handleHomeEventEntryInputChange(
+                          "EventsImage",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="https://..."
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      <label className="inline-flex h-9 cursor-pointer items-center justify-center rounded-full border border-[#63c37a] bg-white px-4 text-xs font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(event) =>
+                            handleHomeEventImageUpload(event.target.files?.[0])
+                          }
+                        />
+                        {uploadingField === "home-event-image"
+                          ? "Uploading..."
+                          : "Upload image"}
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleHomeEventEntryInputChange("EventsImage", "")
+                        }
+                        className="inline-flex h-9 items-center justify-center rounded-full border border-slate-300 bg-white px-4 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-100"
+                      >
+                        Clear
+                      </button>
+                    </div>
+
+                    {homeEventEntryForm.EventsImage && (
+                      <img
+                        src={homeEventEntryForm.EventsImage}
+                        alt="Event"
+                        className="mt-3 h-40 w-full rounded-2xl object-cover ring-1 ring-[#0000000f]"
+                      />
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Event Text
+                    </label>
+                    <textarea
+                      value={homeEventEntryForm.EventsText}
+                      onChange={(event) =>
+                        handleHomeEventEntryInputChange(
+                          "EventsText",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="Event description"
+                      className="min-h-36 w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                      spellCheck={false}
+                    />
+                  </div>
+                </section>
               </div>
             </div>
           ) : activeSection === "about" ? (
@@ -2664,6 +3858,212 @@ export default function AdminPanelPage() {
                       className="min-h-40 w-full rounded-2xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm leading-relaxed text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
                       spellCheck={false}
                     />
+                  </div>
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "partnerDonations" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Partner With Us: Donation Options
+                </h3>
+                <button
+                  type="button"
+                  onClick={handleCreateNewPartnerDonation}
+                  className="inline-flex h-10 items-center justify-center rounded-full border border-[#63c37a] bg-white px-5 text-sm font-semibold text-[#63c37a] transition-colors hover:bg-[#63c37a] hover:text-white"
+                >
+                  + Create New Option
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div className="mb-3 flex items-center justify-between gap-2">
+                    <p className="text-sm font-semibold text-[#1d2238]">
+                      Existing Options
+                    </p>
+                    <span className="rounded-full border border-[#dfe8df] bg-white px-2.5 py-1 text-xs font-semibold text-[#5f6879]">
+                      {partnerDonationEntries.length}
+                    </span>
+                  </div>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {partnerDonationEntries.length ? (
+                      partnerDonationEntries.map((item) => {
+                        const isActive = item.$id === documentId;
+                        const optionTitle =
+                          typeof item.donationTitle === "string" &&
+                          item.donationTitle.trim()
+                            ? item.donationTitle
+                            : "Untitled Donation Option";
+
+                        return (
+                          <button
+                            key={item.$id}
+                            type="button"
+                            onClick={() => handleSelectPartnerDonation(item)}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="line-clamp-2 text-sm font-semibold text-[#1d2238]">
+                                {optionTitle}
+                              </p>
+                              {(item.best === true ||
+                                item.optimised === true) && (
+                                <span className="rounded-full border border-[#63c37a59] bg-[#63c37a14] px-2 py-0.5 text-[10px] font-bold tracking-[0.06em] text-[#4a945c] uppercase">
+                                  Optimised
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-1 line-clamp-1 text-xs text-[#5f6879]">
+                              ₹
+                              {Number(item.donationPrice || 0).toLocaleString(
+                                "en-IN",
+                              )}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No donation options yet. Create your first one.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Donation Title
+                    </label>
+                    <input
+                      type="text"
+                      value={partnerDonationForm.donationTitle}
+                      onChange={(event) =>
+                        handlePartnerDonationInputChange(
+                          "donationTitle",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="e.g., One Child's Education"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                      Donation Price (INR)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={partnerDonationForm.donationPrice}
+                      onChange={(event) =>
+                        handlePartnerDonationInputChange(
+                          "donationPrice",
+                          event.target.value,
+                        )
+                      }
+                      placeholder="e.g., 3000"
+                      className="w-full rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                    />
+                  </div>
+
+                  <div className="rounded-2xl border border-[#dbe3e7] bg-white p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[#1d2238]">
+                          Optimised
+                        </p>
+                        <p className="mt-1 text-xs text-[#5f6879]">
+                          Highlight this donation box with the green featured
+                          style.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={partnerDonationForm.optimised}
+                        onClick={() =>
+                          handlePartnerDonationInputChange(
+                            "optimised",
+                            !partnerDonationForm.optimised,
+                          )
+                        }
+                        className={`relative inline-flex h-7 w-13 items-center rounded-full border transition-colors ${
+                          partnerDonationForm.optimised
+                            ? "border-[#63c37a] bg-[#63c37a]"
+                            : "border-[#cfd9d3] bg-[#e8efea]"
+                        }`}
+                      >
+                        <span
+                          className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
+                            partnerDonationForm.optimised
+                              ? "translate-x-7"
+                              : "translate-x-1"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-[#dbe3e7] bg-white p-4">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                      <label className="block text-sm font-semibold text-[#1d2238]">
+                        Donation Benefits
+                      </label>
+                      <button
+                        type="button"
+                        onClick={addPartnerDonationBenefitField}
+                        className="inline-flex h-8 items-center justify-center rounded-full border border-[#63c37a] bg-white px-3 text-xs font-semibold text-[#63c37a] hover:bg-[#63c37a] hover:text-white"
+                      >
+                        Add benefit
+                      </button>
+                    </div>
+
+                    <div className="space-y-2">
+                      {(partnerDonationForm.donationBenefits || []).map(
+                        (benefit, index) => (
+                          <div
+                            key={`donation-benefit-${index}`}
+                            className="flex gap-2"
+                          >
+                            <input
+                              type="text"
+                              value={benefit}
+                              onChange={(event) =>
+                                handlePartnerDonationBenefitChange(
+                                  index,
+                                  event.target.value,
+                                )
+                              }
+                              placeholder={`Benefit ${index + 1}`}
+                              className="flex-1 rounded-xl border border-[#dbe3e7] bg-white px-3 py-2.5 text-sm text-[#1d2238] outline-none transition-colors focus:border-[#63c37a]"
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removePartnerDonationBenefitField(index)
+                              }
+                              disabled={
+                                (partnerDonationForm.donationBenefits || [])
+                                  .length <= 1
+                              }
+                              className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-300 bg-white px-3 text-xs font-semibold text-rose-600 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ),
+                      )}
+                    </div>
                   </div>
                 </section>
               </div>

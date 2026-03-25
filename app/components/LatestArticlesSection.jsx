@@ -1,9 +1,12 @@
 "use client";
 
+import { Query } from "appwrite";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
+import { createDatabasesClient } from "../../lib/appwriteClient";
 
-const latestArticles = [
+const fallbackLatestArticles = [
   {
     author: "SDEAS Foundation",
     date: "March 2026",
@@ -34,6 +37,66 @@ const latestArticles = [
 ];
 
 export default function LatestArticlesSection() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const [latestArticles, setLatestArticles] = useState(fallbackLatestArticles);
+
+  useEffect(() => {
+    const loadEventCardFromHome = async () => {
+      const homeSecondaryCollectionId =
+        config.collections.homeTwo || "home_page_two";
+
+      if (!databases || !config.databaseId || !homeSecondaryCollectionId) {
+        return;
+      }
+
+      try {
+        const result = await databases.listDocuments(
+          config.databaseId,
+          homeSecondaryCollectionId,
+          [Query.orderDesc("$createdAt"), Query.limit(100)],
+        );
+
+        const mapped = (result.documents || [])
+          .map((doc, index) => {
+            const image =
+              typeof doc.EventsImage === "string" ? doc.EventsImage.trim() : "";
+            const title =
+              typeof doc.EventsHeading === "string"
+                ? doc.EventsHeading.trim()
+                : "";
+            const excerpt =
+              typeof doc.EventsText === "string" ? doc.EventsText.trim() : "";
+
+            if (!image || !title || !excerpt) return null;
+
+            return {
+              author: "SDEAS Foundation",
+              date:
+                typeof doc.$createdAt === "string"
+                  ? new Date(doc.$createdAt).toLocaleString("default", {
+                      month: "long",
+                      year: "numeric",
+                    })
+                  : "Latest",
+              title,
+              excerpt,
+              image,
+              highlighted: index === 1,
+            };
+          })
+          .filter(Boolean);
+
+        if (mapped.length) {
+          setLatestArticles(mapped);
+        }
+      } catch {
+        // keep fallback article
+      }
+    };
+
+    loadEventCardFromHome();
+  }, [config.collections.homeTwo, config.databaseId, databases]);
+
   return (
     <section className="bg-white py-14 md:py-24">
       <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">

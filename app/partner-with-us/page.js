@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { ID } from "appwrite";
+import { useEffect, useMemo, useState } from "react";
+import { ID, Query } from "appwrite";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { DonationCard } from "../components/DonationCard";
@@ -10,6 +10,52 @@ import { createDatabasesClient } from "../../lib/appwriteClient";
 
 export default function PartnerWithUs() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const [donationOptions, setDonationOptions] = useState([
+    {
+      amount: "1,000",
+      title: "Training Support",
+      description: "Support training materials",
+      features: [
+        "Study materials for 5 students",
+        "Basic training equipment",
+        "Digital resources access",
+      ],
+    },
+    {
+      amount: "5,000",
+      title: "Sponsor a Student",
+      description: "Complete training sponsorship",
+      features: [
+        "Full course materials",
+        "Practical sessions",
+        "Placement assistance",
+        "Certificate issuance",
+      ],
+      highlighted: true,
+    },
+    {
+      amount: "25,000",
+      title: "Skill Development Batch",
+      description: "Sponsor an entire training batch",
+      features: [
+        "Training for 20 students",
+        "Complete course duration",
+        "Job placement support",
+        "Success tracking",
+      ],
+    },
+    {
+      amount: "1,00,000",
+      title: "Community Project",
+      description: "Fund a complete initiative",
+      features: [
+        "Healthcare camp for 500+ people",
+        "Infrastructure development",
+        "Sustainable impact",
+        "Progress reporting",
+      ],
+    },
+  ]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -22,6 +68,85 @@ export default function PartnerWithUs() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
+
+  useEffect(() => {
+    const loadDonations = async () => {
+      const donationCollectionId =
+        config.collections.partnerPage || config.collections.partnerResponses;
+
+      if (!databases || !config.databaseId || !donationCollectionId) {
+        return;
+      }
+
+      try {
+        const result = await databases.listDocuments(
+          config.databaseId,
+          donationCollectionId,
+          [Query.orderDesc("$createdAt"), Query.limit(100)],
+        );
+
+        const mapped = (result.documents || [])
+          .map((doc) => {
+            const title =
+              typeof doc.donationTitle === "string"
+                ? doc.donationTitle.trim()
+                : "";
+            const priceNumber = Number(doc.donationPrice);
+            const price =
+              Number.isFinite(priceNumber) && priceNumber > 0
+                ? priceNumber.toLocaleString("en-IN")
+                : "";
+
+            const benefits = Array.isArray(doc.donationBenefits)
+              ? doc.donationBenefits
+                  .filter((item) => typeof item === "string")
+                  .map((item) => item.trim())
+                  .filter(Boolean)
+              : typeof doc.donationBenefits === "string"
+                ? doc.donationBenefits
+                    .split(/\n|,/)
+                    .map((item) => item.trim())
+                    .filter(Boolean)
+                : [];
+
+            if (!title || !price) {
+              return null;
+            }
+
+            const optimised =
+              typeof doc.optimised === "boolean"
+                ? doc.optimised
+                : typeof doc.best === "boolean"
+                  ? doc.best
+                  : false;
+
+            return {
+              amount: price,
+              title,
+              description: `${benefits.length || 1} benefit${benefits.length === 1 ? "" : "s"} included`,
+              features: benefits.length
+                ? benefits
+                : ["Direct social impact support"],
+              highlighted: optimised,
+            };
+          })
+          .filter(Boolean);
+
+        if (mapped.length) {
+          setDonationOptions(mapped);
+        }
+      } catch {
+        // keep fallback donation cards
+      }
+    };
+
+    loadDonations();
+  }, [
+    config.collections.partnerPage,
+    config.collections.partnerResponses,
+    config.databaseId,
+    databases,
+  ]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -124,50 +249,16 @@ export default function PartnerWithUs() {
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            <DonationCard
-              amount="1,000"
-              title="Training Support"
-              description="Support training materials"
-              features={[
-                "Study materials for 5 students",
-                "Basic training equipment",
-                "Digital resources access",
-              ]}
-            />
-            <DonationCard
-              amount="5,000"
-              title="Sponsor a Student"
-              description="Complete training sponsorship"
-              features={[
-                "Full course materials",
-                "Practical sessions",
-                "Placement assistance",
-                "Certificate issuance",
-              ]}
-              highlighted
-            />
-            <DonationCard
-              amount="25,000"
-              title="Skill Development Batch"
-              description="Sponsor an entire training batch"
-              features={[
-                "Training for 20 students",
-                "Complete course duration",
-                "Job placement support",
-                "Success tracking",
-              ]}
-            />
-            <DonationCard
-              amount="1,00,000"
-              title="Community Project"
-              description="Fund a complete initiative"
-              features={[
-                "Healthcare camp for 500+ people",
-                "Infrastructure development",
-                "Sustainable impact",
-                "Progress reporting",
-              ]}
-            />
+            {donationOptions.map((item, index) => (
+              <DonationCard
+                key={`${item.title}-${index}`}
+                amount={item.amount}
+                title={item.title}
+                description={item.description}
+                features={item.features}
+                highlighted={item.highlighted}
+              />
+            ))}
           </div>
         </div>
       </section>

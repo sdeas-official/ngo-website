@@ -1,11 +1,13 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { Query } from "appwrite";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
+import { createDatabasesClient } from "../../lib/appwriteClient";
 
-const programCards = [
+const fallbackProgramCards = [
   {
     title: "Skill Development Training",
     image: "/indtrain.jpeg",
@@ -30,7 +32,68 @@ const programCards = [
 ];
 
 export default function ProgramCardsSection() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
   const [hoveredIndex, setHoveredIndex] = useState(null);
+  const [programCards, setProgramCards] = useState(fallbackProgramCards);
+
+  useEffect(() => {
+    const loadProgramCardFromHome = async () => {
+      const homeOurProgramsCollectionId =
+        config.collections.homeOurPrograms || "home_our_programs";
+
+      if (!databases || !config.databaseId || !homeOurProgramsCollectionId) {
+        return;
+      }
+
+      try {
+        const result = await databases.listDocuments(
+          config.databaseId,
+          homeOurProgramsCollectionId,
+          [Query.orderDesc("$createdAt"), Query.limit(100)],
+        );
+
+        const mapped = (result.documents || [])
+          .map((doc) => {
+            const image =
+              typeof doc.programImage === "string"
+                ? doc.programImage.trim()
+                : typeof doc.ourProgrammsImage === "string"
+                  ? doc.ourProgrammsImage.trim()
+                  : "";
+            const title =
+              typeof doc.programTitle === "string"
+                ? doc.programTitle.trim()
+                : typeof doc.ourProgrammsTitle === "string"
+                  ? doc.ourProgrammsTitle.trim()
+                  : "";
+            const description =
+              typeof doc.programDescription === "string"
+                ? doc.programDescription.trim()
+                : typeof doc.ourProgrammsText === "string"
+                  ? doc.ourProgrammsText.trim()
+                  : "";
+
+            if (!image || !title || !description) return null;
+
+            return {
+              title,
+              image,
+              alt: title,
+              description,
+            };
+          })
+          .filter(Boolean);
+
+        if (mapped.length) {
+          setProgramCards(mapped);
+        }
+      } catch {
+        // keep fallback card
+      }
+    };
+
+    loadProgramCardFromHome();
+  }, [config.collections.homeTwo, config.databaseId, databases]);
 
   return (
     <section className="relative z-10 bg-[#f8faf8] py-20 md:py-28">
