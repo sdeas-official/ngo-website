@@ -13,6 +13,7 @@ const navItems = [
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
   { label: "Partner With Us", href: "/partner-with-us" },
+  { label: "Register Now", href: "/register-now" },
   { label: "Contact", href: "/contact" },
 ];
 

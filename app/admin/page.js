@@ -15,6 +15,7 @@ const sections = [
   { key: "programs", label: "Programs Page" },
   { key: "testimonials", label: "Testimonials" },
   { key: "partnerDonations", label: "Partner: Donations" },
+  { key: "registrations", label: "Registrations" },
   { key: "responses", label: "Responses" },
   { key: "partnerResponses", label: "Partner Requests" },
 ];
@@ -194,6 +195,19 @@ function extractYouTubeVideoId(url) {
   }
 }
 
+function isRegistrationApproved(data) {
+  const value = data?.approved;
+
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return normalized === "true" || normalized === "1";
+  }
+
+  return false;
+}
+
 export default function AdminPanelPage() {
   const router = useRouter();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -225,6 +239,7 @@ export default function AdminPanelPage() {
   );
   const [partnerDonationEntries, setPartnerDonationEntries] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
+  const [registrations, setRegistrations] = useState([]);
   const [contactResponses, setContactResponses] = useState([]);
   const [partnerResponses, setPartnerResponses] = useState([]);
   const [aboutRecordIds, setAboutRecordIds] = useState([]);
@@ -265,8 +280,18 @@ export default function AdminPanelPage() {
     !cloudinaryCloudName || !cloudinaryUploadPreset;
 
   const isResponsesSection =
-    activeSection === "responses" || activeSection === "partnerResponses";
+    activeSection === "responses" ||
+    activeSection === "partnerResponses" ||
+    activeSection === "registrations";
   const showDeleteAction = false;
+
+  const selectedRegistration = useMemo(
+    () =>
+      registrations.find((response) => response.$id === documentId) ||
+      registrations[0] ||
+      null,
+    [registrations, documentId],
+  );
 
   const selectedContactResponse = useMemo(
     () =>
@@ -302,6 +327,7 @@ export default function AdminPanelPage() {
     setPrograms([]);
     setTestimonialForm(createEmptyTestimonialForm());
     setTestimonials([]);
+    setRegistrations([]);
     setContactResponses([]);
     setPartnerResponses([]);
     setAboutRecordIds([]);
@@ -525,12 +551,14 @@ export default function AdminPanelPage() {
               activeSection === "homeEvents" ||
               activeSection === "partnerDonations" ||
               activeSection === "testimonials" ||
+              activeSection === "registrations" ||
               activeSection === "responses" ||
               activeSection === "partnerResponses"
               ? 100
               : 1,
           ),
           ...(activeSection === "responses" ||
+          activeSection === "registrations" ||
           activeSection === "partnerResponses"
             ? [Query.orderDesc("$createdAt")]
             : []),
@@ -694,6 +722,7 @@ export default function AdminPanelPage() {
         setBlogPosts(docs);
         setPrograms([]);
         setTestimonials([]);
+        setRegistrations([]);
         setContactResponses([]);
         setPartnerResponses([]);
         setPartnerDonationEntries([]);
@@ -819,6 +848,7 @@ export default function AdminPanelPage() {
         const docs = result.documents;
         const firstDoc = docs[0];
         setPrograms([]);
+        setRegistrations([]);
         setContactResponses(docs);
         setTestimonials([]);
         setPartnerDonationEntries([]);
@@ -830,6 +860,37 @@ export default function AdminPanelPage() {
           firstDoc ? JSON.stringify(sanitizeDocument(firstDoc), null, 2) : "{}",
         );
         setStatus(`Loaded ${docs.length} contact response(s).`);
+        return;
+      }
+
+      if (activeSection === "registrations") {
+        const docs = [...result.documents].sort((a, b) => {
+          const approvedA = isRegistrationApproved(a) ? 1 : 0;
+          const approvedB = isRegistrationApproved(b) ? 1 : 0;
+
+          if (approvedA !== approvedB) {
+            return approvedA - approvedB;
+          }
+
+          const createdAtA = new Date(a?.$createdAt || 0).getTime();
+          const createdAtB = new Date(b?.$createdAt || 0).getTime();
+          return createdAtB - createdAtA;
+        });
+
+        const firstDoc = docs[0];
+        setPrograms([]);
+        setRegistrations(docs);
+        setContactResponses([]);
+        setTestimonials([]);
+        setPartnerDonationEntries([]);
+        setPartnerResponses([]);
+        setBlogPosts([]);
+        setAboutRecordIds([]);
+        setDocumentId(firstDoc?.$id || "");
+        setEditorValue(
+          firstDoc ? JSON.stringify(sanitizeDocument(firstDoc), null, 2) : "{}",
+        );
+        setStatus(`Loaded ${docs.length} registration request(s).`);
         return;
       }
 
@@ -890,6 +951,7 @@ export default function AdminPanelPage() {
       setBlogPosts([]);
       setPrograms([]);
       setTestimonials([]);
+      setRegistrations([]);
       setPartnerDonationEntries([]);
       setContactResponses([]);
       setPartnerResponses([]);
@@ -1769,6 +1831,7 @@ export default function AdminPanelPage() {
       setStatus("Saving changes...");
 
       if (
+        activeSection === "registrations" ||
         activeSection === "responses" ||
         activeSection === "partnerResponses"
       ) {
@@ -2328,11 +2391,8 @@ export default function AdminPanelPage() {
     editorValue,
     homeSecondaryCollectionId,
     homeSecondaryDocumentId,
-    homeEventEntries,
     homeEventEntryForm,
     homeForm,
-    partnerDonationForm,
-    partnerDonationEntries,
     homeProgramEntries,
     homeProgramEntryForm,
     getAboutPayloads,
@@ -2344,6 +2404,115 @@ export default function AdminPanelPage() {
     aboutRecordIds,
     replaceOnSave,
   ]);
+
+  const handleApproveRegistration = useCallback(
+    async (registrationId) => {
+      if (
+        !databases ||
+        !config.databaseId ||
+        !collectionId ||
+        !registrationId
+      ) {
+        setError("Missing database or collection configuration.");
+        return;
+      }
+
+      try {
+        setError("");
+        setStatus("Approving registration...");
+
+        await databases.updateDocument(
+          config.databaseId,
+          collectionId,
+          registrationId,
+          {
+            approved: true,
+          },
+        );
+
+        setRegistrations((prev) => {
+          const next = prev.map((entry) =>
+            entry.$id === registrationId ? { ...entry, approved: true } : entry,
+          );
+
+          return [...next].sort((a, b) => {
+            const approvedA = isRegistrationApproved(a) ? 1 : 0;
+            const approvedB = isRegistrationApproved(b) ? 1 : 0;
+            if (approvedA !== approvedB) return approvedA - approvedB;
+
+            const createdAtA = new Date(a?.$createdAt || 0).getTime();
+            const createdAtB = new Date(b?.$createdAt || 0).getTime();
+            return createdAtB - createdAtA;
+          });
+        });
+
+        setStatus("Registration approved. It will now appear on the website.");
+      } catch (approveError) {
+        setError(
+          approveError?.message ||
+            "Approval failed. Ensure a boolean 'approved' field exists in the registrations collection.",
+        );
+        setStatus("Approval failed.");
+      }
+    },
+    [collectionId, config.databaseId, databases],
+  );
+
+  const handleRejectRegistration = useCallback(
+    async (registrationId) => {
+      if (
+        !databases ||
+        !config.databaseId ||
+        !collectionId ||
+        !registrationId
+      ) {
+        setError("Missing database or collection configuration.");
+        return;
+      }
+
+      const confirmed = window.confirm(
+        "Delete this registration request? This action cannot be undone.",
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      try {
+        setError("");
+        setStatus("Rejecting registration...");
+
+        await databases.deleteDocument(
+          config.databaseId,
+          collectionId,
+          registrationId,
+        );
+
+        const remaining = registrations.filter(
+          (entry) => entry.$id !== registrationId,
+        );
+        setRegistrations(remaining);
+
+        if (documentId === registrationId) {
+          const nextDoc = remaining[0];
+          setDocumentId(nextDoc?.$id || "");
+          setEditorValue(
+            nextDoc ? JSON.stringify(sanitizeDocument(nextDoc), null, 2) : "{}",
+          );
+        }
+
+        setStatus(
+          remaining.length
+            ? "Registration rejected and removed."
+            : "Registration rejected. No pending requests.",
+        );
+      } catch (rejectError) {
+        setError(rejectError?.message || "Failed to reject registration.");
+        setStatus("Rejection failed.");
+      }
+    },
+    [collectionId, config.databaseId, databases, documentId, registrations],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -4065,6 +4234,192 @@ export default function AdminPanelPage() {
                       )}
                     </div>
                   </div>
+                </section>
+              </div>
+            </div>
+          ) : activeSection === "registrations" ? (
+            <div className="mt-6 space-y-5">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <h3 className="font-serif text-2xl font-bold text-[#1d2238]">
+                  Registration Requests
+                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="rounded-full border border-[#dfe8df] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6879]">
+                    {
+                      registrations.filter(
+                        (entry) => !isRegistrationApproved(entry),
+                      ).length
+                    }{" "}
+                    pending
+                  </span>
+                  <span className="rounded-full border border-[#dfe8df] bg-white px-3 py-1.5 text-xs font-semibold text-[#5f6879]">
+                    {registrations.length} total
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                Ensure your Appwrite collection has a boolean field named
+                <span className="mx-1 rounded bg-amber-100 px-1.5 py-0.5 font-semibold text-amber-950">
+                  approved
+                </span>
+                so requests stay hidden until approved.
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
+                <aside className="rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  <p className="mb-3 text-sm font-semibold text-[#1d2238]">
+                    Incoming Requests
+                  </p>
+
+                  <div className="max-h-135 space-y-2 overflow-auto pr-1">
+                    {registrations.length ? (
+                      registrations.map((registration, index) => {
+                        const isActive = registration.$id === documentId;
+                        const fullName = [
+                          registration.firstName,
+                          registration.lastName,
+                        ]
+                          .filter(Boolean)
+                          .join(" ")
+                          .trim();
+                        const isApproved = isRegistrationApproved(registration);
+
+                        return (
+                          <button
+                            key={registration.$id}
+                            type="button"
+                            onClick={() => {
+                              setDocumentId(registration.$id);
+                              setStatus(
+                                `Viewing registration ${index + 1} of ${registrations.length}.`,
+                              );
+                            }}
+                            className={`w-full rounded-2xl border px-3 py-3 text-left transition-colors ${
+                              isActive
+                                ? "border-[#63c37a] bg-[#eff9f1]"
+                                : "border-[#e4ebee] bg-white hover:bg-[#f8fbfa]"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="line-clamp-1 text-sm font-semibold text-[#1d2238]">
+                                {fullName || "Unknown"}
+                              </p>
+                              <span
+                                className={`rounded-full px-2 py-0.5 text-[10px] font-bold tracking-[0.06em] uppercase ${
+                                  isApproved
+                                    ? "border border-emerald-200 bg-emerald-50 text-emerald-700"
+                                    : "border border-amber-200 bg-amber-50 text-amber-700"
+                                }`}
+                              >
+                                {isApproved ? "Approved" : "Pending"}
+                              </span>
+                            </div>
+                            <p className="mt-1 line-clamp-1 text-xs text-[#5f6879]">
+                              {registration.email || "No email"}
+                            </p>
+                          </button>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                        No registration requests yet.
+                      </div>
+                    )}
+                  </div>
+                </aside>
+
+                <section className="space-y-4 rounded-3xl border border-[#dfe8df] bg-linear-to-b from-[#f9fdf9] to-white p-4 shadow-[0_8px_20px_rgba(17,24,39,0.04)]">
+                  {selectedRegistration ? (
+                    <>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            First Name
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#1d2238]">
+                            {selectedRegistration.firstName || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Last Name
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[#1d2238]">
+                            {selectedRegistration.lastName || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Email
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedRegistration.email || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Phone Number
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedRegistration.phoneNumber || "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Submitted At
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {selectedRegistration.$createdAt
+                              ? new Date(
+                                  selectedRegistration.$createdAt,
+                                ).toLocaleString()
+                              : "-"}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs font-semibold tracking-[0.08em] text-[#5f6879] uppercase">
+                            Status
+                          </p>
+                          <p className="mt-1 text-sm text-[#1d2238]">
+                            {isRegistrationApproved(selectedRegistration)
+                              ? "Approved"
+                              : "Pending approval"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-wrap gap-2 pt-2">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleApproveRegistration(selectedRegistration.$id)
+                          }
+                          disabled={isRegistrationApproved(
+                            selectedRegistration,
+                          )}
+                          className="inline-flex h-10 items-center justify-center rounded-full bg-[#63c37a] px-5 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(99,195,122,0.32)] transition-all hover:-translate-y-px hover:bg-[#459557] disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                          {isRegistrationApproved(selectedRegistration)
+                            ? "Already Approved"
+                            : "Approve"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            handleRejectRegistration(selectedRegistration.$id)
+                          }
+                          className="inline-flex h-10 items-center justify-center rounded-full border border-rose-300 bg-white px-5 text-sm font-semibold text-rose-600 transition-colors hover:bg-rose-600 hover:text-white"
+                        >
+                          Reject
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
+                      Select a request to view details.
+                    </div>
+                  )}
                 </section>
               </div>
             </div>
