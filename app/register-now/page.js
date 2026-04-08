@@ -1,29 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ID, Query } from "appwrite";
+import { useMemo, useState } from "react";
+import { ID } from "appwrite";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { createDatabasesClient } from "../../lib/appwriteClient";
 
-function mapApprovedRegistrations(docs) {
-  return (docs || [])
-    .map((doc) => {
-      const firstName = typeof doc.firstName === "string" ? doc.firstName : "";
-      const lastName = typeof doc.lastName === "string" ? doc.lastName : "";
-      const fullName = `${firstName} ${lastName}`.trim();
-
-      if (!fullName) {
-        return null;
-      }
-
-      return {
-        id: doc.$id,
-        fullName,
-      };
-    })
-    .filter(Boolean);
-}
+const supportOptions = [
+  "Alumni Member",
+  "Mentor for Students",
+  "Industry Support / Placement",
+  "CSR Support",
+  "Volunteer for NGO Activities",
+];
 
 export default function RegisterNowPage() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
@@ -33,50 +22,87 @@ export default function RegisterNowPage() {
     lastName: "",
     email: "",
     phoneNumber: "",
+    adress: "",
+    yearJoined: "",
+    company: "",
+    designation: "",
+    support: [],
+    image: "",
   });
-  const [approvedRegistrations, setApprovedRegistrations] = useState([]);
+  const [isImageUploading, setIsImageUploading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isLoadingApproved, setIsLoadingApproved] = useState(true);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
-  const [approvedLoadError, setApprovedLoadError] = useState("");
 
-  useEffect(() => {
-    const loadApprovedRegistrations = async () => {
-      const registrationCollectionId = config.collections.registrations;
+  const cloudinaryCloudName =
+    process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "";
+  const cloudinaryUploadPreset =
+    process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "";
+  const isCloudinaryConfigMissing =
+    !cloudinaryCloudName || !cloudinaryUploadPreset;
 
-      if (!databases || !config.databaseId || !registrationCollectionId) {
-        setIsLoadingApproved(false);
-        return;
-      }
+  const uploadToCloudinary = async (file) => {
+    if (isCloudinaryConfigMissing) {
+      throw new Error(
+        "Cloudinary config missing. Add NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET in .env.",
+      );
+    }
 
-      try {
-        setApprovedLoadError("");
+    const formDataPayload = new FormData();
+    formDataPayload.append("file", file);
+    formDataPayload.append("upload_preset", cloudinaryUploadPreset);
 
-        const result = await databases.listDocuments(
-          config.databaseId,
-          registrationCollectionId,
-          [
-            Query.equal("approved", [true]),
-            Query.orderDesc("$createdAt"),
-            Query.limit(100),
-          ],
-        );
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`,
+      {
+        method: "POST",
+        body: formDataPayload,
+      },
+    );
 
-        setApprovedRegistrations(mapApprovedRegistrations(result.documents));
-      } catch (error) {
-        setApprovedRegistrations([]);
-        setApprovedLoadError(
-          error?.message ||
-            "Could not load approved registrations. Ensure your collection has an approved boolean field.",
-        );
-      } finally {
-        setIsLoadingApproved(false);
-      }
-    };
+    if (!response.ok) {
+      const cloudinaryError = await response.json().catch(() => ({}));
+      throw new Error(
+        cloudinaryError?.error?.message || "Cloudinary upload failed.",
+      );
+    }
 
-    loadApprovedRegistrations();
-  }, [config.collections.registrations, config.databaseId, databases]);
+    const data = await response.json();
+    return data.secure_url;
+  };
+
+  const handleImageUpload = async (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      setSubmitError("");
+      setSubmitSuccess("");
+      setIsImageUploading(true);
+
+      const imageUrl = await uploadToCloudinary(file);
+      setFormData((prev) => ({ ...prev, image: imageUrl }));
+    } catch (error) {
+      setSubmitError(error?.message || "Image upload failed.");
+    } finally {
+      setIsImageUploading(false);
+      event.target.value = "";
+    }
+  };
+
+  const handleSupportToggle = (option) => {
+    setFormData((prev) => {
+      const alreadySelected = prev.support.includes(option);
+
+      return {
+        ...prev,
+        support: alreadySelected
+          ? prev.support.filter((item) => item !== option)
+          : [...prev.support, option],
+      };
+    });
+  };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -92,9 +118,22 @@ export default function RegisterNowPage() {
     }
 
     const digitsOnlyPhone = (formData.phoneNumber || "").replace(/\D/g, "");
+
+    if (!formData.image) {
+      setSubmitSuccess("");
+      setSubmitError("Please upload image before submitting.");
+      return;
+    }
+
     if (!/^\d{10,12}$/.test(digitsOnlyPhone)) {
       setSubmitSuccess("");
       setSubmitError("Phone number must contain 10 to 12 digits.");
+      return;
+    }
+
+    if (!(formData.support || []).length) {
+      setSubmitSuccess("");
+      setSubmitError("Please choose at least one support option.");
       return;
     }
 
@@ -112,6 +151,12 @@ export default function RegisterNowPage() {
           lastName: formData.lastName.trim(),
           email: formData.email.trim(),
           phoneNumber: digitsOnlyPhone,
+          image: formData.image,
+          adress: formData.adress.trim(),
+          yearJoined: formData.yearJoined.trim(),
+          company: formData.company.trim(),
+          designation: formData.designation.trim(),
+          support: formData.support.join(", "),
           approved: false,
         },
       );
@@ -121,6 +166,12 @@ export default function RegisterNowPage() {
         lastName: "",
         email: "",
         phoneNumber: "",
+        adress: "",
+        yearJoined: "",
+        company: "",
+        designation: "",
+        support: [],
+        image: "",
       });
       setSubmitSuccess("Registration request sent. Wait for approval.");
     } catch (error) {
@@ -154,7 +205,7 @@ export default function RegisterNowPage() {
       </section>
 
       <section className="py-14 md:py-20 xl:py-24">
-        <div className="mx-auto grid w-full max-w-350 grid-cols-1 gap-8 px-4 md:px-8 lg:grid-cols-2 lg:gap-10 lg:px-10">
+        <div className="mx-auto w-full max-w-3xl px-4 md:px-8 lg:px-10">
           <div className="rounded-3xl border border-[#63c37a1f] bg-white p-6 shadow-[0_12px_30px_rgba(17,24,39,0.08)] md:p-8">
             <h2 className="font-serif text-3xl font-bold text-[#1d2238] md:text-4xl">
               Registration Form
@@ -222,6 +273,25 @@ export default function RegisterNowPage() {
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                  Profile Image *
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] file:mr-3 file:rounded-md file:border-0 file:bg-[#eff9f1] file:px-3 file:py-1.5 file:text-sm file:font-semibold file:text-[#1d2238]"
+                />
+                <p className="mt-2 text-xs text-[#5f6879]">
+                  {isImageUploading
+                    ? "Uploading image to Cloudinary..."
+                    : formData.image
+                      ? "Image uploaded successfully."
+                      : "Choose an image file to upload."}
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
                   Phone Number *
                 </label>
                 <input
@@ -239,6 +309,107 @@ export default function RegisterNowPage() {
                 />
               </div>
 
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.adress}
+                  onChange={(event) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      adress: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
+                  placeholder="Enter your address"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                    Year Joined *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.yearJoined}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        yearJoined: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
+                    placeholder="e.g. 2024"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                    Company *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={formData.company}
+                    onChange={(event) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company: event.target.value,
+                      }))
+                    }
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
+                    placeholder="Enter company"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-[#1d2238]">
+                  Designation *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.designation}
+                  onChange={(event) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      designation: event.target.value,
+                    }))
+                  }
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-[#1d2238] outline-none focus:border-[#63c37a]"
+                  placeholder="Enter designation"
+                />
+              </div>
+
+              <fieldset className="rounded-2xl border border-slate-200 px-4 py-4">
+                <legend className="px-1 text-sm font-semibold text-[#1d2238]">
+                  How would you like to support the SDEAS Foundation? *
+                </legend>
+
+                <div className="mt-2 space-y-3">
+                  {supportOptions.map((option) => (
+                    <label
+                      key={option}
+                      className="flex items-center gap-3 text-sm text-[#1d2238]"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={formData.support.includes(option)}
+                        onChange={() => handleSupportToggle(option)}
+                        className="h-5 w-5 rounded border-slate-300 accent-[#63c37a]"
+                      />
+                      <span>{option}</span>
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+
               {submitError && (
                 <div className="rounded-xl border border-rose-300 bg-rose-50 px-3 py-2 text-sm text-rose-700">
                   {submitError}
@@ -253,50 +424,13 @@ export default function RegisterNowPage() {
 
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || isImageUploading}
                 className="inline-flex h-12 w-full items-center justify-center rounded-full bg-[#63c37a] px-6 text-base font-semibold text-white shadow-[0_10px_20px_rgba(99,195,122,0.32)] transition-colors hover:bg-[#459557] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isSubmitting ? "Submitting..." : "Register Now"}
               </button>
             </form>
           </div>
-
-          <aside className="rounded-3xl border border-[#63c37a1f] bg-[#f7fdf8] p-6 md:p-8">
-            <h3 className="font-serif text-3xl font-bold text-[#1d2238] md:text-4xl">
-              Approved Registrations
-            </h3>
-            <p className="mt-3 text-sm leading-relaxed text-[#5f6879]">
-              These are profiles that have already been reviewed and approved by
-              admin.
-            </p>
-
-            {approvedLoadError && (
-              <div className="mt-5 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                {approvedLoadError}
-              </div>
-            )}
-
-            <div className="mt-6 space-y-2">
-              {isLoadingApproved ? (
-                <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
-                  Loading approved list...
-                </div>
-              ) : approvedRegistrations.length ? (
-                approvedRegistrations.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="rounded-2xl border border-[#dfe8df] bg-white px-4 py-3 text-sm font-semibold text-[#1d2238]"
-                  >
-                    {entry.fullName}
-                  </div>
-                ))
-              ) : (
-                <div className="rounded-2xl border border-dashed border-[#cfd9d3] bg-white px-4 py-6 text-sm text-[#5f6879]">
-                  No approved registrations yet.
-                </div>
-              )}
-            </div>
-          </aside>
         </div>
       </section>
 

@@ -12,9 +12,13 @@ const navItems = [
   { label: "Programs", href: "/programs" },
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
-  { label: "Partner With Us", href: "/partner-with-us" },
-  { label: "Register Now", href: "/register-now" },
+  { label: "Partner With Us", href: "/partner-with-us", hasDropdown: true },
   { label: "Contact", href: "/contact" },
+];
+
+const partnerDropdownItems = [
+  { label: "Register With Us", href: "/register-now" },
+  { label: "Members", href: "/members" },
 ];
 
 function normalizePath(path) {
@@ -40,6 +44,12 @@ export default function Navbar() {
       pathname === normalizedHref || pathname.startsWith(`${normalizedHref}/`)
     );
   };
+
+  const isPartnerSectionActive =
+    pathname === "/partner-with-us" ||
+    pathname === "/register-now" ||
+    pathname === "/members" ||
+    pathname.startsWith("/partner-with-us/");
 
   useEffect(() => {
     const handleScroll = () => {
@@ -75,6 +85,52 @@ export default function Navbar() {
         <ul className="absolute left-1/2 hidden -translate-x-1/2 items-center gap-8 text-base text-[#576076] xl:flex">
           {navItems.map((item) => {
             const isActive = isActiveNavItem(item.href);
+
+            if (item.hasDropdown) {
+              return (
+                <li key={item.href} className="group relative">
+                  <Link
+                    href={item.href}
+                    aria-current={isPartnerSectionActive ? "page" : undefined}
+                    className={`inline-flex items-center gap-1 leading-none transition-colors hover:text-[#171a34] ${
+                      isPartnerSectionActive
+                        ? "font-bold text-[#1d2238]"
+                        : "font-medium text-[#576076]"
+                    }`}
+                  >
+                    <span>{item.label}</span>
+                    <span className="text-xs leading-none transition-transform duration-200 group-hover:rotate-180 group-focus-within:rotate-180">
+                      ▾
+                    </span>
+                  </Link>
+
+                  <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 opacity-0 transition-all duration-200 group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100">
+                    <div className="min-w-56 rounded-2xl border border-[#e3ebe4] bg-white p-2 shadow-[0_18px_40px_rgba(17,24,39,0.12)]">
+                      {partnerDropdownItems.map((dropdownItem) => {
+                        const isDropdownActive = isActiveNavItem(
+                          dropdownItem.href,
+                        );
+
+                        return (
+                          <Link
+                            key={dropdownItem.href}
+                            href={dropdownItem.href}
+                            aria-current={isDropdownActive ? "page" : undefined}
+                            className={`block rounded-xl px-4 py-3 text-sm transition-colors hover:bg-[#f3faf5] hover:text-[#1d2238] ${
+                              isDropdownActive
+                                ? "bg-[#eff9f1] font-semibold text-[#1d2238]"
+                                : "font-medium text-[#576076]"
+                            }`}
+                          >
+                            {dropdownItem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </li>
+              );
+            }
 
             return (
               <li key={item.href}>
@@ -124,6 +180,49 @@ export default function Navbar() {
           <ul className="space-y-3 text-base text-[#576076]">
             {navItems.map((item) => {
               const isActive = isActiveNavItem(item.href);
+
+              if (item.hasDropdown) {
+                return (
+                  <li key={`mobile-${item.href}`} className="space-y-2">
+                    <Link
+                      href={item.href}
+                      aria-current={isPartnerSectionActive ? "page" : undefined}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={`block w-fit transition-colors hover:text-[#171a34] ${
+                        isPartnerSectionActive
+                          ? "font-bold text-[#1d2238]"
+                          : "font-medium text-[#576076]"
+                      }`}
+                    >
+                      {item.label}
+                    </Link>
+
+                    <div className="ml-4 space-y-2 border-l border-slate-200 pl-4">
+                      {partnerDropdownItems.map((dropdownItem) => {
+                        const isDropdownActive = isActiveNavItem(
+                          dropdownItem.href,
+                        );
+
+                        return (
+                          <Link
+                            key={dropdownItem.href}
+                            href={dropdownItem.href}
+                            aria-current={isDropdownActive ? "page" : undefined}
+                            onClick={() => setIsMobileMenuOpen(false)}
+                            className={`block w-fit transition-colors hover:text-[#171a34] ${
+                              isDropdownActive
+                                ? "font-bold text-[#1d2238]"
+                                : "font-medium text-[#576076]"
+                            }`}
+                          >
+                            {dropdownItem.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </li>
+                );
+              }
 
               return (
                 <li key={`mobile-${item.href}`}>
