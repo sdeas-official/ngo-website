@@ -188,10 +188,30 @@ export default function Home() {
             <motion.div variants={fadeInUp} className="mt-8 md:mt-10">
               <a
                 href="/partner-with-us"
-                className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white transition-colors hover:bg-[#459557] md:h-14 md:px-10 md:text-lg"
+                className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white shadow-[0_6px_24px_rgba(99,195,122,0.4)] transition-all hover:bg-[#459557] hover:shadow-[0_8px_30px_rgba(99,195,122,0.5)] md:h-14 md:px-10 md:text-lg"
               >
                 DONATE NOW
               </a>
+            </motion.div>
+
+            <motion.div
+              variants={fadeInUp}
+              className="mt-10 flex flex-wrap gap-8 border-t border-[#e5e7eb] pt-8 md:mt-12 md:gap-10"
+            >
+              {[
+                { number: "4,000+", label: "Youth Trained" },
+                { number: "50+", label: "Programs Run" },
+                { number: "5+", label: "Years of Impact" },
+              ].map((stat) => (
+                <div key={stat.label}>
+                  <p className="text-2xl font-extrabold text-[#63c37a] md:text-3xl">
+                    {stat.number}
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-[#5b667d]">
+                    {stat.label}
+                  </p>
+                </div>
+              ))}
             </motion.div>
           </motion.div>
 
@@ -274,7 +294,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="bg-[#efefef] py-14 md:py-24">
+      <section className="bg-white py-14 md:py-24">
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 items-center gap-8 px-4 md:px-8 lg:grid-cols-2 lg:gap-16 lg:px-10">
           {/* Mobile-only heading shown above photos */}
           <motion.div
@@ -408,7 +428,7 @@ export default function Home() {
             >
               SDEAS Welfare Foundation actively collaborates with industries and
               corporate organizations to implement CSR initiatives focused on
-              skill development, youth empowermentt, and community development.
+              skill development, youth empowerment, and community development.
             </motion.p>
 
             <motion.a
