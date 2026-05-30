@@ -33,6 +33,7 @@ export function AdminCountsProvider({ children }) {
       safe("programs", async () => (await repo.list("programs", { limit: 100 })).length),
       safe("testimonials", async () => (await repo.list("testimonials", { limit: 100 })).length),
       safe("donations", async () => (await repo.list("partnerDonations", { limit: 100 })).length),
+      safe("team", async () => (await repo.list("teamMembers", { limit: 100 })).length),
       safe("contact", async () => (await repo.list("responses", { limit: 100 })).length),
       safe("registrationsAll", async () => {
         const docs = await repo.list("registrations", { limit: 100 });

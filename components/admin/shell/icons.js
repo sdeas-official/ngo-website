@@ -12,6 +12,7 @@ import {
   Mail,
   Handshake,
   Settings,
+  Users,
 } from "lucide-react";
 
 export const navIcons = {
@@ -26,4 +27,5 @@ export const navIcons = {
   mail: Mail,
   handshake: Handshake,
   settings: Settings,
+  users: Users,
 };

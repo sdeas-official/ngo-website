@@ -20,6 +20,10 @@ export function computeSectionPreview(section, values = {}) {
   } else if (hint.startsWith("video:")) {
     const key = hint.slice(6);
     summary = extractYouTubeVideoId(values[key] || "") ? "Video set" : "No video set";
+  } else if (hint.startsWith("list:")) {
+    const key = hint.slice(5);
+    const arr = Array.isArray(values[key]) ? values[key].filter(Boolean) : [];
+    summary = arr.length ? arr.join(" · ") : "Not set yet";
   }
 
   return { summary, thumbnails: imageFields.length ? thumbnails : [] };

@@ -1,61 +1,78 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { ID, Query } from "appwrite";
+import { useMemo, useState } from "react";
+import { ID } from "appwrite";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { DonationCard } from "../components/DonationCard";
 import { Button } from "../components/Button";
 import { createDatabasesClient } from "../../lib/appwriteClient";
+import {
+  usePartnerContent,
+  useDonationTiers,
+  PARTNER_DEFAULTS,
+} from "@/lib/useSiteContent";
+
+// Hardcoded fallback cards, used only if the donation_tiers collection is empty
+// or unreachable.
+const FALLBACK_TIERS = [
+  {
+    amount: "1,000",
+    title: "Training Support",
+    description: "Support training materials",
+    features: [
+      "Study materials for 5 students",
+      "Basic training equipment",
+      "Digital resources access",
+    ],
+  },
+  {
+    amount: "5,000",
+    title: "Sponsor a Student",
+    description: "Complete training sponsorship",
+    features: [
+      "Full course materials",
+      "Practical sessions",
+      "Placement assistance",
+      "Certificate issuance",
+    ],
+    highlighted: true,
+  },
+  {
+    amount: "25,000",
+    title: "Skill Development Batch",
+    description: "Sponsor an entire training batch",
+    features: [
+      "Training for 20 students",
+      "Complete course duration",
+      "Job placement support",
+      "Success tracking",
+    ],
+  },
+  {
+    amount: "1,00,000",
+    title: "Community Project",
+    description: "Fund a complete initiative",
+    features: [
+      "Healthcare camp for 500+ people",
+      "Infrastructure development",
+      "Sustainable impact",
+      "Progress reporting",
+    ],
+  },
+];
 
 export default function PartnerWithUs() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
-  const [donationOptions, setDonationOptions] = useState([
-    {
-      amount: "1,000",
-      title: "Training Support",
-      description: "Support training materials",
-      features: [
-        "Study materials for 5 students",
-        "Basic training equipment",
-        "Digital resources access",
-      ],
-    },
-    {
-      amount: "5,000",
-      title: "Sponsor a Student",
-      description: "Complete training sponsorship",
-      features: [
-        "Full course materials",
-        "Practical sessions",
-        "Placement assistance",
-        "Certificate issuance",
-      ],
-      highlighted: true,
-    },
-    {
-      amount: "25,000",
-      title: "Skill Development Batch",
-      description: "Sponsor an entire training batch",
-      features: [
-        "Training for 20 students",
-        "Complete course duration",
-        "Job placement support",
-        "Success tracking",
-      ],
-    },
-    {
-      amount: "1,00,000",
-      title: "Community Project",
-      description: "Fund a complete initiative",
-      features: [
-        "Healthcare camp for 500+ people",
-        "Infrastructure development",
-        "Sustainable impact",
-        "Progress reporting",
-      ],
-    },
-  ]);
+  const content = usePartnerContent();
+  const tiers = useDonationTiers();
+  const donationOptions = tiers && tiers.length ? tiers : FALLBACK_TIERS;
+  const volunteerRoles = content.volunteerRoles?.length
+    ? content.volunteerRoles
+    : PARTNER_DEFAULTS.volunteerRoles;
+  const partnersList = content.partnersList?.length
+    ? content.partnersList
+    : PARTNER_DEFAULTS.partnersList;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -68,85 +85,6 @@ export default function PartnerWithUs() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState("");
-
-  useEffect(() => {
-    const loadDonations = async () => {
-      const donationCollectionId =
-        config.collections.partnerPage || config.collections.partnerResponses;
-
-      if (!databases || !config.databaseId || !donationCollectionId) {
-        return;
-      }
-
-      try {
-        const result = await databases.listDocuments(
-          config.databaseId,
-          donationCollectionId,
-          [Query.orderDesc("$createdAt"), Query.limit(100)],
-        );
-
-        const mapped = (result.documents || [])
-          .map((doc) => {
-            const title =
-              typeof doc.donationTitle === "string"
-                ? doc.donationTitle.trim()
-                : "";
-            const priceNumber = Number(doc.donationPrice);
-            const price =
-              Number.isFinite(priceNumber) && priceNumber > 0
-                ? priceNumber.toLocaleString("en-IN")
-                : "";
-
-            const benefits = Array.isArray(doc.donationBenefits)
-              ? doc.donationBenefits
-                  .filter((item) => typeof item === "string")
-                  .map((item) => item.trim())
-                  .filter(Boolean)
-              : typeof doc.donationBenefits === "string"
-                ? doc.donationBenefits
-                    .split(/\n|,/)
-                    .map((item) => item.trim())
-                    .filter(Boolean)
-                : [];
-
-            if (!title || !price) {
-              return null;
-            }
-
-            const optimised =
-              typeof doc.optimised === "boolean"
-                ? doc.optimised
-                : typeof doc.best === "boolean"
-                  ? doc.best
-                  : false;
-
-            return {
-              amount: price,
-              title,
-              description: `${benefits.length || 1} benefit${benefits.length === 1 ? "" : "s"} included`,
-              features: benefits.length
-                ? benefits
-                : ["Direct social impact support"],
-              highlighted: optimised,
-            };
-          })
-          .filter(Boolean);
-
-        if (mapped.length) {
-          setDonationOptions(mapped);
-        }
-      } catch {
-        // keep fallback donation cards
-      }
-    };
-
-    loadDonations();
-  }, [
-    config.collections.partnerPage,
-    config.collections.partnerResponses,
-    config.databaseId,
-    databases,
-  ]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -213,21 +151,21 @@ export default function PartnerWithUs() {
       <section className="relative isolate overflow-hidden">
         <div className="relative flex min-h-[56vh] items-center md:min-h-[62vh]">
           <img
-            src="https://images.unsplash.com/photo-1728584388081-819a78aa30ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400"
+            src={content.heroImage}
             alt="Partner with us"
             className="absolute inset-0 h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-[#14532d73]" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0c3d20]/90 via-[#14532d]/75 to-[#14532d]/40" />
           <div className="relative z-10 mx-auto w-full max-w-350 px-4 py-20 md:px-8 lg:px-10">
-            <p className="text-sm font-semibold tracking-[0.25em] text-[#dcfce7] uppercase">
-              Partner With Us
-            </p>
-            <h1 className="mt-4 max-w-4xl font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
-              Be Part of the Change
+            <span className="inline-flex items-center gap-2 text-xs font-bold tracking-[0.3em] text-[#a7f3c0] uppercase">
+              <span className="h-px w-8 bg-[#a7f3c0]" />
+              {content.heroEyebrow}
+            </span>
+            <h1 className="mt-5 max-w-4xl font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
+              {content.heroHeading}
             </h1>
             <p className="mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-              Support our mission through donations, volunteering, and strategic
-              partnerships that transform lives.
+              {content.heroSubtitle}
             </p>
           </div>
         </div>
@@ -237,14 +175,13 @@ export default function PartnerWithUs() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Support Our Mission
+              {content.donateEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Choose Your Impact
+              {content.donateHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Your donation directly creates opportunities in skills,
-              healthcare, and livelihood development.
+              {content.donateSubtitle}
             </p>
           </div>
 
@@ -267,32 +204,17 @@ export default function PartnerWithUs() {
         <div className="mx-auto grid w-full max-w-350 grid-cols-1 gap-8 px-4 md:px-8 lg:grid-cols-2 lg:gap-12 lg:px-10">
           <div>
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Volunteer With Us
+              {content.volunteerEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Become a Volunteer
+              {content.volunteerHeading}
             </h2>
             <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              Join our passionate team making a measurable difference in
-              communities. Whether you have a few hours a week or can support
-              long-term, there is a role for you.
+              {content.volunteerIntro}
             </p>
 
             <div className="mt-7 space-y-4">
-              {[
-                {
-                  title: "Training Assistants",
-                  desc: "Help facilitate workshops and provide mentorship to students.",
-                },
-                {
-                  title: "Community Coordinators",
-                  desc: "Assist in organizing field activities and healthcare camps.",
-                },
-                {
-                  title: "Administrative Support",
-                  desc: "Support documentation, communication, and coordination.",
-                },
-              ].map((item) => (
+              {volunteerRoles.map((item) => (
                 <div
                   key={item.title}
                   className="rounded-2xl bg-white p-5 shadow-[0_4px_16px_rgba(17,24,39,0.07)]"
@@ -307,7 +229,7 @@ export default function PartnerWithUs() {
           <div>
             <div className="rounded-3xl border border-[#63c37a1f] bg-white p-6 shadow-[0_10px_30px_rgba(17,24,39,0.08)] md:p-8">
               <h3 className="font-serif text-3xl font-bold text-[#1d2238]">
-                Volunteer Application
+                {content.formHeading}
               </h3>
               <form onSubmit={handleSubmit} className="mt-6 space-y-4">
                 <div>
@@ -437,24 +359,18 @@ export default function PartnerWithUs() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Our Network
+              {content.partnersEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Partners & Sponsors
+              {content.partnersHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              We collaborate with leading organizations to maximize impact and
-              scale social outcomes.
+              {content.partnersSubtitle}
             </p>
           </div>
 
           <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              "Industry Partners",
-              "CSR Foundations",
-              "Educational Institutions",
-              "Government Bodies",
-            ].map((item) => (
+            {partnersList.map((item) => (
               <div
                 key={item}
                 className="flex min-h-28 items-center justify-center rounded-2xl border border-[#63c37a1f] bg-[#f7fdf8] px-4 text-center"
@@ -466,20 +382,19 @@ export default function PartnerWithUs() {
 
           <div className="mt-12 rounded-3xl bg-[#63c37a] p-8 text-center text-white md:p-12">
             <h3 className="font-serif text-3xl font-bold md:text-5xl">
-              Interested in Partnership?
+              {content.ctaHeading}
             </h3>
             <p className="mx-auto mt-4 max-w-2xl text-white/90 md:text-lg">
-              Join us as a corporate partner, CSR sponsor, or collaborating
-              organization. Let&apos;s create meaningful impact together.
+              {content.ctaText}
             </p>
             <div className="mt-7 flex justify-center">
               <Button
-                to="/contact"
+                to={content.ctaButtonHref || "/contact"}
                 variant="secondary"
                 size="lg"
                 className="min-w-52"
               >
-                Discuss Partnership
+                {content.ctaButtonLabel}
               </Button>
             </div>
           </div>

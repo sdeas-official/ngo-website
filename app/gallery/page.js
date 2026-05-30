@@ -1,88 +1,112 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { Play, X } from "lucide-react";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
+import { createDatabasesClient } from "@/lib/appwriteClient";
+import { Query } from "appwrite";
+import { useGalleryContent, GALLERY_DEFAULTS } from "@/lib/useSiteContent";
 
-const photos = [
-  {
-    id: 1,
-    url: "https://images.unsplash.com/photo-1768796370577-c6e8b708b980?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Skill Development Workshop",
-    category: "Training",
-  },
-  {
-    id: 2,
-    url: "https://images.unsplash.com/photo-1759756480941-7230dedf5fc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Industrial Training Program",
-    category: "Training",
-  },
-  {
-    id: 3,
-    url: "https://images.unsplash.com/photo-1603540879030-cf3ef7505a48?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Healthcare Camp",
-    category: "Healthcare",
-  },
-  {
-    id: 4,
-    url: "https://images.unsplash.com/photo-1728584388081-819a78aa30ae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Community Development",
-    category: "Community",
-  },
-  {
-    id: 5,
-    url: "https://images.unsplash.com/photo-1767595789539-cd012af80914?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Student Success Stories",
-    category: "Success",
-  },
-  {
-    id: 6,
-    url: "https://images.unsplash.com/photo-1766862769365-64368bf24df0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Fire Safety Training",
-    category: "Training",
-  },
-  {
-    id: 7,
-    url: "https://images.unsplash.com/photo-1759738098462-90ffac98c554?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Women Empowerment Program",
-    category: "Community",
-  },
-  {
-    id: 8,
-    url: "https://images.unsplash.com/photo-1758599667729-a6f0f8bd213b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Volunteer Activities",
-    category: "Community",
-  },
-  {
-    id: 9,
-    url: "https://images.unsplash.com/photo-1628147529780-36964fbb8d54?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080",
-    title: "Job Placement Success",
-    category: "Success",
-  },
-];
-
-const categories = ["All", "Training", "Healthcare", "Community", "Success"];
-
-const videos = [
-  {
-    title: "Industrial Training Program Overview",
-    desc: "A glimpse into our practical training methodology and student experience.",
-  },
-  {
-    title: "Student Testimonials",
-    desc: "Real stories from learners whose lives were transformed through our programs.",
-  },
-];
+const categories = ["All", "Training", "Community"];
 
 export default function Gallery() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const content = useGalleryContent();
+  const videos = content.videos?.length ? content.videos : GALLERY_DEFAULTS.videos;
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeFilter, setActiveFilter] = useState("All");
+  const [photos, setPhotos] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const filteredPhotos = useMemo(() => {
     if (activeFilter === "All") return photos;
+
+    // Map filter names to database field names
+    const fieldMap = {
+      Training: "TrainingImages",
+      Community: "CommunityImages",
+    };
+
     return photos.filter((photo) => photo.category === activeFilter);
-  }, [activeFilter]);
+  }, [activeFilter, photos]);
+
+  useEffect(() => {
+    const loadGalleryData = async () => {
+      if (!databases || !config.databaseId || !config.collections.gallery) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const result = await databases.listDocuments(
+          config.databaseId,
+          config.collections.gallery,
+          [Query.limit(1)],
+        );
+
+        if (result.documents && result.documents.length > 0) {
+          const doc = result.documents[0];
+          const allPhotos = [];
+          let photoId = 1;
+
+          // Process AllImages
+          if (Array.isArray(doc.AllImages)) {
+            doc.AllImages.forEach((url) => {
+              if (typeof url === "string" && url.trim()) {
+                allPhotos.push({
+                  id: photoId++,
+                  url: url.trim(),
+                  title: "Gallery Image",
+                  category: "All",
+                });
+              }
+            });
+          }
+
+          // Process TrainingImages
+          if (Array.isArray(doc.TrainingImages)) {
+            doc.TrainingImages.forEach((url) => {
+              if (typeof url === "string" && url.trim()) {
+                allPhotos.push({
+                  id: photoId++,
+                  url: url.trim(),
+                  title: "Training Image",
+                  category: "Training",
+                });
+              }
+            });
+          }
+
+          // Process CommunityImages
+          if (Array.isArray(doc.CommunityImages)) {
+            doc.CommunityImages.forEach((url) => {
+              if (typeof url === "string" && url.trim()) {
+                allPhotos.push({
+                  id: photoId++,
+                  url: url.trim(),
+                  title: "Community Image",
+                  category: "Community",
+                });
+              }
+            });
+          }
+
+          if (allPhotos.length > 0) {
+            setPhotos(allPhotos);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load gallery data:", error);
+        setPhotos([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadGalleryData();
+  }, [databases, config]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -91,21 +115,20 @@ export default function Gallery() {
       <section className="relative isolate overflow-hidden">
         <div className="relative flex min-h-[56vh] items-center md:min-h-[62vh]">
           <img
-            src="https://images.unsplash.com/photo-1758599667729-a6f0f8bd213b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400"
+            src={content.heroImage}
             alt="Gallery"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[#14532d70]" />
           <div className="relative z-10 mx-auto w-full max-w-350 px-4 py-20 md:px-8 lg:px-10">
             <p className="text-sm font-semibold tracking-[0.25em] text-[#dcfce7] uppercase">
-              Media Gallery
+              {content.heroEyebrow}
             </p>
             <h1 className="mt-4 font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
-              Moments of Impact
+              {content.heroHeading}
             </h1>
             <p className="mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-              Capturing transformation, learning, and community empowerment
-              through our initiatives.
+              {content.heroSubtitle}
             </p>
           </div>
         </div>
@@ -115,14 +138,13 @@ export default function Gallery() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Photo Gallery
+              {content.photoEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Explore Our Work
+              {content.photoHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Browse events, training sessions, field activities, and success
-              stories.
+              {content.photoSubtitle}
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-2.5 md:gap-3">
@@ -173,13 +195,13 @@ export default function Gallery() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Video Gallery
+              {content.videoEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Stories in Motion
+              {content.videoHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Training highlights, testimonials, and community impact snapshots.
+              {content.videoSubtitle}
             </p>
           </div>
 

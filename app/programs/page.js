@@ -15,6 +15,17 @@ import FooterSection from "../components/FooterSection";
 import { Button } from "../components/Button";
 import ProgramSection from "../components/ProgramSection";
 import { createDatabasesClient } from "../../lib/appwriteClient";
+import { useProgramsContent } from "../../lib/useSiteContent";
+
+// Lucide icons selectable for the editable "Special Programs" cards (by name).
+const SPECIAL_ICON_MAP = {
+  Flame,
+  Shield,
+  BookOpen,
+  GraduationCap,
+  Heart,
+  Users,
+};
 
 const programSectionsFallback = [
   {
@@ -82,29 +93,18 @@ const programSectionsFallback = [
   },
 ];
 
-const specialPrograms = [
-  {
-    icon: Flame,
-    title: "Fire & Safety Awareness",
-    desc: "Comprehensive fire safety training and awareness programs for industries, schools, and communities.",
-  },
-  {
-    icon: Shield,
-    title: "Disaster Management",
-    desc: "Preparedness, response, and recovery training to build resilient communities capable of handling emergencies.",
-  },
-  {
-    icon: BookOpen,
-    title: "CSR Collaborative Programs",
-    desc: "Partnership initiatives with corporate entities aligned to measurable and high-impact community goals.",
-  },
-];
-
 export default function Programs() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const content = useProgramsContent();
   const [programSections, setProgramSections] = useState(
     programSectionsFallback,
   );
+
+  const specialPrograms = (content.specialPrograms || []).map((p) => ({
+    icon: SPECIAL_ICON_MAP[p.icon] || Flame,
+    title: p.title,
+    desc: p.desc,
+  }));
 
   useEffect(() => {
     const loadPrograms = async () => {
@@ -178,24 +178,22 @@ export default function Programs() {
       <section className="relative isolate overflow-hidden">
         <div className="relative flex min-h-[56vh] w-full items-center md:min-h-[62vh] xl:min-h-[66vh]">
           <img
-            src="https://images.unsplash.com/photo-1759756480941-7230dedf5fc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400"
+            src={content.heroImage}
             alt="Training program"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[#14532d66]" />
           <div className="relative z-10 mx-auto w-full max-w-350 px-4 py-20 md:px-8 lg:px-10">
             <p className="text-sm font-semibold tracking-[0.25em] text-[#dcfce7] uppercase">
-              Our Programs
+              {content.heroEyebrow}
             </p>
             <h1 className="mt-4 max-w-4xl font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
-              Skills, Health & Community
+              {content.heroTitleTop}
               <br />
-              <span className="text-[#d1fae5]">Transformation at Scale</span>
+              <span className="text-[#d1fae5]">{content.heroTitleBottom}</span>
             </h1>
             <p className="mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-              Comprehensive initiatives designed to empower communities and
-              create lasting impact through education, healthcare and
-              sustainable development.
+              {content.heroSubtitle}
             </p>
           </div>
         </div>
@@ -220,11 +218,10 @@ export default function Programs() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <h2 className="font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Special Programs & Initiatives
+              {content.specialHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Targeted interventions addressing safety, preparedness, and
-              partnership-driven social impact.
+              {content.specialSubtitle}
             </p>
           </div>
 
@@ -260,24 +257,22 @@ export default function Programs() {
       <section className="bg-[#63c37a] py-16 md:py-24">
         <div className="mx-auto w-full max-w-350 px-4 text-center md:px-8 lg:px-10">
           <h2 className="font-serif text-4xl font-bold text-white md:text-6xl">
-            Ready to Make a Difference?
+            {content.ctaHeading}
           </h2>
           <p className="mx-auto mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-            Join our programs as a participant, volunteer, or partner
-            organization. Together, we can create lasting change in communities
-            across India.
+            {content.ctaSubtitle}
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-4">
-            <Button to="/get-involved" variant="secondary" size="lg">
-              Get Involved
+            <Button to={content.ctaPrimaryHref} variant="secondary" size="lg">
+              {content.ctaPrimaryLabel}
             </Button>
             <Button
-              to="/contact"
+              to={content.ctaSecondaryHref}
               variant="outline"
               size="lg"
               className="border-white text-white hover:bg-white hover:text-[#1d2238]"
             >
-              Contact Us
+              {content.ctaSecondaryLabel}
             </Button>
           </div>
         </div>
