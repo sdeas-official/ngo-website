@@ -1,5 +1,7 @@
 "use client";
 
+import { useSiteSettings } from "../../lib/useSiteContent";
+
 const stats = [
   { number: "4,000+", label: "Youth Trained" },
   { number: "50+", label: "Programs Delivered" },
@@ -8,6 +10,8 @@ const stats = [
 ];
 
 export default function GetInTouchSection() {
+  const settings = useSiteSettings();
+
   return (
     <section className="relative isolate overflow-hidden bg-[#1d2238] py-20 md:py-28">
       {/* Subtle background decoration */}
@@ -44,13 +48,12 @@ export default function GetInTouchSection() {
         </span>
 
         <h2 className="mt-6 font-serif text-4xl font-bold leading-tight text-white md:text-5xl lg:text-6xl">
-          Ready to Change a Life?
+          {settings.getInTouchHeading || "Ready to Change a Life?"}
         </h2>
 
         <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-white/60 md:text-lg">
-          Every contribution, partnership, or volunteer hour helps us reach more
-          youth, deliver better training, and build stronger communities across
-          India.
+          {settings.getInTouchText ||
+            "Every contribution, partnership, or volunteer hour helps us reach more youth, deliver better training, and build stronger communities across India."}
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">

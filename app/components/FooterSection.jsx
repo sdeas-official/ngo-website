@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSiteSettings } from "../../lib/useSiteContent";
 
 const causes = [
   {
@@ -61,14 +64,31 @@ function LinkedInIcon() {
   );
 }
 
-const socialLinks = [
-  { label: "Facebook", href: "#", Icon: FacebookIcon },
-  { label: "X (Twitter)", href: "#", Icon: XIcon },
-  { label: "YouTube", href: "#", Icon: YouTubeIcon },
-  { label: "LinkedIn", href: "#", Icon: LinkedInIcon },
+// Maps a site-settings social key to its icon + display label.
+const SOCIAL_ICONS = {
+  facebook: { label: "Facebook", Icon: FacebookIcon },
+  twitter: { label: "X (Twitter)", Icon: XIcon },
+  youtube: { label: "YouTube", Icon: YouTubeIcon },
+  linkedin: { label: "LinkedIn", Icon: LinkedInIcon },
+};
+
+const FALLBACK_COLUMNS = [
+  { title: "Navigate", links: navLinks },
+  { title: "Our Causes", links: causes.map((c) => ({ label: c.label, href: c.href })) },
 ];
 
 export default function FooterSection() {
+  const settings = useSiteSettings();
+
+  const socials = Object.entries(settings.socialLinks || {})
+    .filter(([key, href]) => SOCIAL_ICONS[key] && href)
+    .map(([key, href]) => ({ ...SOCIAL_ICONS[key], href }));
+
+  const columns =
+    Array.isArray(settings.footerColumns) && settings.footerColumns.length
+      ? settings.footerColumns
+      : FALLBACK_COLUMNS;
+
   return (
     <footer className="bg-linear-to-r from-[#121317] via-[#14161b] to-[#111216] text-white">
       <div className="mx-auto w-full max-w-7xl px-4 pt-20 pb-12 md:px-8 md:pt-24 lg:px-10">
@@ -78,24 +98,24 @@ export default function FooterSection() {
             <Link
               href="/"
               className="inline-flex items-center gap-3"
-              aria-label="SDEAS Welfare Foundation"
+              aria-label={settings.brandName || "SDEAS Welfare Foundation"}
             >
               <Image
-                src="/logo.jpeg"
-                alt="SDEAS Welfare Foundation"
+                src={settings.logo || "/logo.jpeg"}
+                alt={settings.brandName || "SDEAS Welfare Foundation"}
                 width={220}
                 height={56}
+                unoptimized
                 className="h-12 w-auto object-contain"
               />
             </Link>
 
             <p className="mt-6 max-w-[32ch] text-sm leading-relaxed text-white/60 md:text-base">
-              Empowering youth through skill development, education, industrial
-              training, and community development initiatives across India.
+              {settings.footerAbout}
             </p>
 
             <div className="mt-8 flex items-center gap-4">
-              {socialLinks.map(({ label, href, Icon }) => (
+              {socials.map(({ label, href, Icon }) => (
                 <a
                   key={label}
                   href={href}
@@ -115,59 +135,40 @@ export default function FooterSection() {
             </h3>
 
             <div className="mt-6 space-y-3 text-sm leading-relaxed text-white/60 md:text-base">
-              <p>Rourkela, Odisha, India</p>
-              <p>+91 93486 29818</p>
-              <a
-                href="mailto:info@sdeasfoundation.org"
-                className="block transition-colors hover:text-[#63c37a]"
-              >
-                info@sdeasfoundation.org
-              </a>
+              {settings.contactAddress ? <p>{settings.contactAddress}</p> : null}
+              {settings.contactPhone ? <p>{settings.contactPhone}</p> : null}
+              {settings.contactEmail ? (
+                <a
+                  href={`mailto:${settings.contactEmail}`}
+                  className="block transition-colors hover:text-[#63c37a]"
+                >
+                  {settings.contactEmail}
+                </a>
+              ) : null}
             </div>
           </div>
 
-          {/* Navigate */}
-          <div>
-            <h3 className="font-serif text-xl font-bold text-[#63c37a] md:text-2xl">
-              Navigate
-            </h3>
+          {/* Link columns (editable) */}
+          {columns.map((column) => (
+            <div key={column.title}>
+              <h3 className="font-serif text-xl font-bold text-[#63c37a] md:text-2xl">
+                {column.title}
+              </h3>
 
-            <ul className="mt-6 space-y-2.5 text-sm text-white/60 md:text-base">
-              {navLinks.map((item) => (
-                <li key={item.label}>
-                  <Link
-                    href={item.href}
-                    className="transition-colors hover:text-[#63c37a]"
-                  >
-                    {item.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Our Causes */}
-          <div>
-            <h3 className="font-serif text-xl font-bold text-[#63c37a] md:text-2xl">
-              Our Causes
-            </h3>
-
-            <ul className="mt-6 space-y-5">
-              {causes.map((cause) => (
-                <li key={cause.label}>
-                  <Link
-                    href={cause.href}
-                    className="block text-sm font-semibold text-white transition-colors hover:text-[#63c37a] md:text-base"
-                  >
-                    {cause.label}
-                  </Link>
-                  <p className="mt-1 text-xs text-white/40 md:text-sm">
-                    {cause.desc}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          </div>
+              <ul className="mt-6 space-y-2.5 text-sm text-white/60 md:text-base">
+                {(column.links || []).map((item) => (
+                  <li key={`${column.title}-${item.label}`}>
+                    <Link
+                      href={item.href || "#"}
+                      className="transition-colors hover:text-[#63c37a]"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </div>
 
         <div className="mt-16 border-t border-white/10 pt-7">
@@ -180,7 +181,7 @@ export default function FooterSection() {
                 Terms &amp; Conditions
               </a>
             </div>
-            <p>©2026 SDEAS Welfare Foundation. All Rights Reserved.</p>
+            <p>{settings.copyright}</p>
           </div>
         </div>
       </div>

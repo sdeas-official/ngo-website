@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useSiteSettings } from "../../lib/useSiteContent";
 
 const navItems = [
   { label: "Home", href: "/" },
@@ -30,6 +31,7 @@ function normalizePath(path) {
 
 export default function Navbar() {
   const pathname = normalizePath(usePathname());
+  const settings = useSiteSettings();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -73,11 +75,12 @@ export default function Navbar() {
           aria-label="SDEAS Welfare Foundation Home"
         >
           <Image
-            src="/NGO%20LOGO.png"
-            alt="SDEAS Welfare Foundation"
+            src={settings.logo || "/NGO%20LOGO.png"}
+            alt={settings.brandName || "SDEAS Welfare Foundation"}
             width={220}
             height={56}
             priority
+            unoptimized
             className="h-10 w-auto object-contain md:h-14"
           />
         </Link>

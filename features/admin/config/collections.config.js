@@ -240,9 +240,62 @@ export const donationsCollection = {
   },
 };
 
+export const ongoingProjectsCollection = {
+  key: "ongoing",
+  label: "Ongoing Projects",
+  singular: "Project",
+  collectionKey: "ongoingProjects",
+  list: {
+    titleField: "title",
+    subtitleField: "location",
+    imageField: "image",
+    searchFields: ["title", "location"],
+  },
+  editor: {
+    groups: [
+      {
+        title: "Details",
+        fields: [
+          { key: "title", label: "Project title", type: "text", required: true },
+          { key: "location", label: "Location", type: "text" },
+          { key: "image", label: "Image", type: "image", required: true },
+        ],
+      },
+      {
+        title: "About",
+        fields: [{ key: "description", label: "Description", type: "textarea", big: true }],
+      },
+      {
+        title: "Ordering",
+        fields: [{ key: "sortOrder", label: "Sort order (lower shows first)", type: "number" }],
+      },
+    ],
+  },
+  emptyValues: { title: "", location: "", image: "", description: "", sortOrder: "" },
+  toForm(doc) {
+    return {
+      title: str(doc.title),
+      location: str(doc.location),
+      image: str(doc.image),
+      description: str(doc.description),
+      sortOrder: typeof doc.sortOrder === "number" ? String(doc.sortOrder) : str(doc.sortOrder),
+    };
+  },
+  toPayload(form) {
+    return {
+      title: (form.title || "").trim(),
+      location: (form.location || "").trim(),
+      image: (form.image || "").trim(),
+      description: (form.description || "").trim(),
+      sortOrder: Number.isFinite(Number(form.sortOrder)) ? Number(form.sortOrder || 0) : 0,
+    };
+  },
+};
+
 export const collectionsByKey = {
   blog: blogCollection,
   programs: programsCollection,
   testimonials: testimonialsCollection,
   donations: donationsCollection,
+  ongoing: ongoingProjectsCollection,
 };

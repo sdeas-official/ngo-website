@@ -2,8 +2,7 @@
 
 import Image from "next/image";
 import { motion } from "motion/react";
-import { Query } from "appwrite";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import OngoingProjectsCarousel from "./components/OngoingProjectsCarousel";
 import LatestArticlesSection from "./components/LatestArticlesSection";
 import GetInTouchSection from "./components/GetInTouchSection";
@@ -19,7 +18,7 @@ import {
   staggerContainer,
   viewport,
 } from "../lib/animations";
-import { createDatabasesClient } from "../lib/appwriteClient";
+import { useHomeContent } from "../lib/useSiteContent";
 
 function extractYouTubeVideoId(url) {
   if (typeof url !== "string" || !url.trim()) return "";
@@ -105,43 +104,14 @@ function VideoModal({ videoId, title, onClose }) {
 }
 
 export default function Home() {
-  const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const content = useHomeContent();
   const [activeCsrVideo, setActiveCsrVideo] = useState(false);
-  const [csrVideoUrl, setCsrVideoUrl] = useState(
-    "https://www.youtube.com/watch?v=jNQXAC9IVRw",
-  );
-  const csrVideoId = extractYouTubeVideoId(csrVideoUrl);
+  const csrVideoId = extractYouTubeVideoId(content.csrVideo);
 
-  useEffect(() => {
-    const loadCsrVideo = async () => {
-      const homeSecondaryCollectionId =
-        config.collections.homeTwo || "home_page_two";
-
-      if (!databases || !config.databaseId || !homeSecondaryCollectionId) {
-        return;
-      }
-
-      try {
-        const result = await databases.listDocuments(
-          config.databaseId,
-          homeSecondaryCollectionId,
-          [Query.orderDesc("$createdAt"), Query.limit(1)],
-        );
-
-        const doc = result.documents?.[0];
-        const videoUrl =
-          typeof doc?.csrVideo === "string" ? doc.csrVideo.trim() : "";
-
-        if (videoUrl) {
-          setCsrVideoUrl(videoUrl);
-        }
-      } catch {
-        // keep fallback video URL
-      }
-    };
-
-    loadCsrVideo();
-  }, [config.collections.homeTwo, config.databaseId, databases]);
+  const heroStats = (content.heroStatNumbers || []).map((number, index) => ({
+    number,
+    label: (content.heroStatLabels || [])[index] || "",
+  }));
 
   return (
     <div className="min-h-screen bg-white">
@@ -169,10 +139,10 @@ export default function Home() {
               className="text-4xl font-extrabold leading-tight text-[#111827] sm:text-5xl md:text-6xl lg:text-7xl"
             >
               <span className="block text-[#63c37a]">
-                Empowering <TextHighlight>Youth</TextHighlight>
+                <TextHighlight>{content.heroTitleTop}</TextHighlight>
               </span>
               <span className="block text-[#111827]">
-                ... Empowering Nation
+                {content.heroTitleBottom}
               </span>
             </motion.h1>
 
@@ -180,17 +150,15 @@ export default function Home() {
               variants={fadeInUp}
               className="mt-5 max-w-xl text-base text-[#5b667d] md:mt-6 md:text-xl"
             >
-              SDEAS Welfare Foundation is a non-profit organization dedicated to
-              empowering youth through skill development, education, and
-              community development initiatives.
+              {content.heroSubtitle}
             </motion.p>
 
             <motion.div variants={fadeInUp} className="mt-8 md:mt-10">
               <a
-                href="/partner-with-us"
+                href={content.heroCtaHref}
                 className="inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-7 text-base font-bold tracking-wide text-white shadow-[0_6px_24px_rgba(99,195,122,0.4)] transition-all hover:bg-[#459557] hover:shadow-[0_8px_30px_rgba(99,195,122,0.5)] md:h-14 md:px-10 md:text-lg"
               >
-                DONATE NOW
+                {content.heroCtaLabel}
               </a>
             </motion.div>
 
@@ -198,11 +166,7 @@ export default function Home() {
               variants={fadeInUp}
               className="mt-10 flex flex-wrap gap-8 border-t border-[#e5e7eb] pt-8 md:mt-12 md:gap-10"
             >
-              {[
-                { number: "4,000+", label: "Youth Trained" },
-                { number: "50+", label: "Programs Run" },
-                { number: "5+", label: "Years of Impact" },
-              ].map((stat) => (
+              {heroStats.map((stat) => (
                 <div key={stat.label}>
                   <p className="text-2xl font-extrabold text-[#63c37a] md:text-3xl">
                     {stat.number}
@@ -223,11 +187,12 @@ export default function Home() {
             animate="visible"
           >
             <Image
-              src="/Gemini_Generated_Image_qxe6jxqxe6jxqxe6.png"
+              src={content.HeroImage}
               alt="SDEAS youth skill development and training"
               width={1100}
               height={1250}
               priority
+              unoptimized
               className="h-auto max-h-[62vh] w-full max-w-sm object-contain sm:max-h-[70vh] sm:max-w-md lg:max-h-[92vh] lg:max-w-xl"
             />
           </motion.div>
@@ -249,31 +214,28 @@ export default function Home() {
               variants={fadeInUp}
               className="text-xl font-semibold text-[#63c37a] md:text-2xl"
             >
-              About Us
+              {content.missionEyebrow}
             </motion.p>
             <motion.h2
               variants={fadeInUp}
               className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl"
             >
-              <TextHighlight>Our Mission</TextHighlight>
+              <TextHighlight>{content.missionHeading}</TextHighlight>
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
             >
-              SDEAS Welfare Foundation is committed to developing and empowering
-              youth through skill development, industrial training, and
-              community programs. We collaborate with industries and CSR
-              initiatives to create practical career opportunities.
+              {content.AboutUsText}
             </motion.p>
 
             <motion.a
               variants={fadeInUp}
-              href="/about"
+              href={content.missionCtaHref}
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
-              LEARN MORE
+              {content.missionCtaLabel}
             </motion.a>
           </motion.div>
 
@@ -285,9 +247,10 @@ export default function Home() {
             viewport={viewport}
           >
             <Image
-              src="/aboutus.jpeg"
+              src={content.AboutUsImage}
               alt="Skill and community development initiative"
               fill
+              unoptimized
               className="object-cover"
             />
           </motion.div>
@@ -308,13 +271,13 @@ export default function Home() {
               variants={fadeInUp}
               className="text-xl font-semibold text-[#63c37a]"
             >
-              What We Do
+              {content.visionEyebrow}
             </motion.p>
             <motion.h2
               variants={fadeInUp}
               className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238]"
             >
-              <TextHighlight>Our Vision</TextHighlight>
+              <TextHighlight>{content.visionHeading}</TextHighlight>
             </motion.h2>
           </motion.div>
 
@@ -327,27 +290,30 @@ export default function Home() {
           >
             <div className="relative row-span-2 h-72 overflow-hidden rounded-3xl sm:h-88 md:h-auto md:rounded-4xl">
               <Image
-                src="/flag2.jpeg"
+                src={content.OurMissionImageOne}
                 alt="Skill development sessions"
                 fill
+                unoptimized
                 className="object-cover"
               />
             </div>
 
             <div className="relative h-34 overflow-hidden rounded-3xl sm:h-42 md:h-auto md:rounded-4xl">
               <Image
-                src="/last boiler.jpeg"
+                src={content.OurMissionImageTwo}
                 alt="Community and youth support"
                 fill
+                unoptimized
                 className="object-cover"
               />
             </div>
 
             <div className="relative h-34 overflow-hidden rounded-3xl sm:h-42 md:h-auto md:rounded-4xl">
               <Image
-                src="/ok.jpeg"
+                src={content.OurMissionImageThree}
                 alt="Education and training activities"
                 fill
+                unoptimized
                 className="object-cover"
               />
             </div>
@@ -366,13 +332,13 @@ export default function Home() {
                 variants={fadeInUp}
                 className="text-xl font-semibold text-[#63c37a] md:text-2xl"
               >
-                What We Do
+                {content.visionEyebrow}
               </motion.p>
               <motion.h2
                 variants={fadeInUp}
                 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl"
               >
-                <TextHighlight>Our Vision</TextHighlight>
+                <TextHighlight>{content.visionHeading}</TextHighlight>
               </motion.h2>
             </div>
 
@@ -380,17 +346,15 @@ export default function Home() {
               variants={fadeInUp}
               className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
             >
-              To create a society where every young individual has access to
-              skill development, education, and employment opportunities,
-              enabling them to become self-reliant and responsible citizens.
+              {content.OurVisionText}
             </motion.p>
 
             <motion.a
               variants={fadeInUp}
-              href="/about"
+              href={content.visionCtaHref}
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
-              LEARN MORE
+              {content.visionCtaLabel}
             </motion.a>
           </motion.div>
         </div>
@@ -413,30 +377,28 @@ export default function Home() {
               variants={fadeInUp}
               className="text-xl font-semibold text-[#63c37a] md:text-2xl"
             >
-              CSR Partnership
+              {content.csrEyebrow}
             </motion.p>
             <motion.h2
               variants={fadeInUp}
               className="mt-4 font-serif text-4xl font-bold leading-tight text-[#1d2238] md:text-6xl"
             >
-              Partner With Us for Social Impact
+              {content.csrHeading}
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-xl"
             >
-              SDEAS Welfare Foundation actively collaborates with industries and
-              corporate organizations to implement CSR initiatives focused on
-              skill development, youth empowerment, and community development.
+              {content.csrText}
             </motion.p>
 
             <motion.a
               variants={fadeInUp}
-              href="/partner-with-us"
+              href={content.csrCtaHref}
               className="mt-8 inline-flex h-12 items-center justify-center rounded-full bg-[#63c37a] px-8 text-base font-bold text-white transition-colors hover:bg-[#459557] md:mt-12 md:h-14 md:px-10 md:text-lg"
             >
-              PARTNER NOW
+              {content.csrCtaLabel}
             </motion.a>
           </motion.div>
 

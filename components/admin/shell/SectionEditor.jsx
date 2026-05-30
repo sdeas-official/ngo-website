@@ -21,8 +21,10 @@ export function SectionEditor({ open, section, values, onClose, onSave }) {
   // Seed the draft from current values whenever a section opens.
   const seed = useMemo(() => {
     if (!section) return {};
+    const defaultFor = (type) => (type === "toggle" ? false : type === "stringList" ? [] : "");
     return section.fields.reduce((acc, f) => {
-      acc[f.key] = values?.[f.key] ?? (f.type === "toggle" ? false : "");
+      const v = values?.[f.key];
+      acc[f.key] = v ?? defaultFor(f.type);
       return acc;
     }, {});
   }, [section, values]);

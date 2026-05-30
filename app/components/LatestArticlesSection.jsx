@@ -79,61 +79,85 @@ export default function LatestArticlesSection() {
   const [latestArticles, setLatestArticles] = useState(fallbackLatestArticles);
 
   useEffect(() => {
-    const loadEventCardFromHome = async () => {
+    if (!databases || !config.databaseId) return;
+
+    // Map a document (from either the events collection or the home_page_two
+    // intro fields) into an article card. Tolerates both field-naming schemes.
+    const toArticle = (doc, index) => {
+      const image =
+        (typeof doc.image === "string" && doc.image.trim()) ||
+        (typeof doc.EventsImage === "string" && doc.EventsImage.trim()) ||
+        "";
+      const title =
+        (typeof doc.title === "string" && doc.title.trim()) ||
+        (typeof doc.EventsHeading === "string" && doc.EventsHeading.trim()) ||
+        "";
+      const excerpt =
+        (typeof doc.text === "string" && doc.text.trim()) ||
+        (typeof doc.EventsText === "string" && doc.EventsText.trim()) ||
+        "";
+
+      if (!image || !title || !excerpt) return null;
+
+      return {
+        author: "SDEAS Foundation",
+        date:
+          typeof doc.$createdAt === "string"
+            ? new Date(doc.$createdAt).toLocaleString("default", {
+                month: "long",
+                year: "numeric",
+              })
+            : "Latest",
+        title,
+        excerpt,
+        image,
+        highlighted: index === 1,
+      };
+    };
+
+    const loadEvents = async () => {
+      const eventsCollectionId =
+        config.collections.homeEventsUpdates || "home_events_and_updates_";
       const homeSecondaryCollectionId =
         config.collections.homeTwo || "home_page_two";
 
-      if (!databases || !config.databaseId || !homeSecondaryCollectionId) {
-        return;
+      // Primary source: the Events & Updates collection managed in the admin.
+      try {
+        const result = await databases.listDocuments(
+          config.databaseId,
+          eventsCollectionId,
+          [Query.orderDesc("$createdAt"), Query.limit(100)],
+        );
+        const mapped = (result.documents || []).map(toArticle).filter(Boolean);
+        if (mapped.length) {
+          setLatestArticles(mapped);
+          return;
+        }
+      } catch {
+        // fall through to the home_page_two intro fields
       }
 
+      // Fallback: the single Events block on home_page_two.
       try {
         const result = await databases.listDocuments(
           config.databaseId,
           homeSecondaryCollectionId,
           [Query.orderDesc("$createdAt"), Query.limit(100)],
         );
-
-        const mapped = (result.documents || [])
-          .map((doc, index) => {
-            const image =
-              typeof doc.EventsImage === "string" ? doc.EventsImage.trim() : "";
-            const title =
-              typeof doc.EventsHeading === "string"
-                ? doc.EventsHeading.trim()
-                : "";
-            const excerpt =
-              typeof doc.EventsText === "string" ? doc.EventsText.trim() : "";
-
-            if (!image || !title || !excerpt) return null;
-
-            return {
-              author: "SDEAS Foundation",
-              date:
-                typeof doc.$createdAt === "string"
-                  ? new Date(doc.$createdAt).toLocaleString("default", {
-                      month: "long",
-                      year: "numeric",
-                    })
-                  : "Latest",
-              title,
-              excerpt,
-              image,
-              highlighted: index === 1,
-            };
-          })
-          .filter(Boolean);
-
-        if (mapped.length) {
-          setLatestArticles(mapped);
-        }
+        const mapped = (result.documents || []).map(toArticle).filter(Boolean);
+        if (mapped.length) setLatestArticles(mapped);
       } catch {
         // keep fallback article
       }
     };
 
-    loadEventCardFromHome();
-  }, [config.collections.homeTwo, config.databaseId, databases]);
+    loadEvents();
+  }, [
+    config.collections.homeEventsUpdates,
+    config.collections.homeTwo,
+    config.databaseId,
+    databases,
+  ]);
 
   return (
     <section className="bg-[#f8faf8] py-14 md:py-24">

@@ -30,4 +30,11 @@ export const navGroups = [
       { key: "partner", label: "Partner Requests", href: "/admin/inbox/partner", icon: "handshake" },
     ],
   },
+  {
+    title: "Site",
+    items: [
+      { key: "ongoing", label: "Ongoing Projects", href: "/admin/collections/ongoing", icon: "target", badge: "ongoing" },
+      { key: "siteSettings", label: "Site Settings", href: "/admin/site-settings", icon: "settings" },
+    ],
+  },
 ];

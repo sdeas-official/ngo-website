@@ -3,8 +3,9 @@
 import { useMemo, useState } from "react";
 import { motion } from "motion/react";
 import { fadeInUp, staggerContainer, viewport } from "../../lib/animations";
+import { useOngoingProjects } from "../../lib/useSiteContent";
 
-const projects = [
+const FALLBACK_PROJECTS = [
   {
     title: "Skill Development Training for Underprivileged Youth",
     location: "Rourkela, Odisha",
@@ -28,10 +29,16 @@ const projects = [
 ];
 
 export default function OngoingProjectsCarousel() {
+  const dynamicProjects = useOngoingProjects();
+  const projects =
+    dynamicProjects && dynamicProjects.length ? dynamicProjects : FALLBACK_PROJECTS;
   const [index, setIndex] = useState(0);
   const total = projects.length;
 
-  const current = useMemo(() => projects[index], [index]);
+  const current = useMemo(
+    () => projects[index] || projects[0],
+    [projects, index],
+  );
 
   const next = () => setIndex((prev) => (prev + 1) % total);
   const prev = () => setIndex((prev) => (prev - 1 + total) % total);

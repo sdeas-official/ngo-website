@@ -10,8 +10,11 @@ import { sanitizeDocument } from "@/features/admin/utils/sanitizeDocument";
 // A few sections used inline fallbacks in the legacy code; those are preserved here.
 const COLLECTION_FALLBACKS = {
   homeTwo: "home_page_two",
+  homeLanding: "home_landing",
   homeOurPrograms: "home_our_programs",
   homeEventsUpdates: "home_events_and_updates_",
+  ongoingProjects: "ongoing_projects",
+  siteSettings: "site_settings",
   registrations: "registration_",
 };
 
