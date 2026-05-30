@@ -48,6 +48,14 @@ export default function Contact() {
     .filter(([key, url]) => SOCIAL_ICONS[key] && url)
     .map(([key, url]) => ({ Icon: SOCIAL_ICONS[key], url, key }));
 
+  // The map always renders: use the admin-provided embed URL if present,
+  // otherwise build a keyless Google Maps embed from the address.
+  const mapQuery = (content.mapAddress || settings.contactAddress || "Rourkela, Odisha, India").trim();
+  const mapSrc = (content.mapEmbedUrl || "").trim()
+    ? content.mapEmbedUrl.trim()
+    : `https://www.google.com/maps?q=${encodeURIComponent(mapQuery)}&z=15&output=embed`;
+  const directionsUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(mapQuery)}`;
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -390,31 +398,65 @@ export default function Contact() {
             </h2>
           </div>
 
-          {content.mapEmbedUrl ? (
-            <div className="mt-8 overflow-hidden rounded-3xl border border-[#63c37a1f] shadow-[0_8px_24px_rgba(17,24,39,0.08)]">
+          <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-3">
+            {/* Map */}
+            <div className="relative overflow-hidden rounded-3xl border border-[#63c37a1f] shadow-[0_12px_36px_rgba(17,24,39,0.12)] lg:col-span-2">
               <iframe
-                src={content.mapEmbedUrl}
+                src={mapSrc}
                 title="Office location map"
-                className="h-80 w-full md:h-96"
+                className="h-72 w-full sm:h-80 lg:h-full lg:min-h-[26rem]"
                 style={{ border: 0 }}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
                 allowFullScreen
               />
             </div>
-          ) : (
-            <div className="mt-8 flex h-80 items-center justify-center rounded-3xl border border-[#63c37a1f] bg-white text-center shadow-[0_8px_24px_rgba(17,24,39,0.08)] md:h-96">
-              <div className="px-4">
-                <MapPin className="mx-auto mb-4 text-[#63c37a]" size={44} />
-                <h3 className="font-serif text-3xl font-bold text-[#1d2238]">
-                  Location Map
+
+            {/* Address / directions card */}
+            <div className="flex flex-col justify-between gap-6 rounded-3xl bg-gradient-to-br from-[#14532d] to-[#1f7a44] p-7 text-white md:p-8">
+              <div>
+                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur">
+                  <MapPin size={24} />
+                </span>
+                <h3 className="mt-5 font-serif text-2xl font-bold md:text-3xl">
+                  {content.officesTitle}
                 </h3>
-                <p className="mt-3 text-[#5f6879]">
+                <p className="mt-3 leading-relaxed text-white/85">
                   <MultiLine text={content.mapAddress} />
                 </p>
+
+                <div className="mt-6 space-y-3 border-t border-white/15 pt-6 text-sm text-white/90">
+                  {settings.contactPhone ? (
+                    <a
+                      href={`tel:${(settings.contactPhone || "").replace(/\s/g, "")}`}
+                      className="flex items-center gap-3 transition-colors hover:text-white"
+                    >
+                      <Phone size={16} className="shrink-0 text-[#a7f3c0]" />
+                      {settings.contactPhone}
+                    </a>
+                  ) : null}
+                  {settings.contactEmail ? (
+                    <a
+                      href={`mailto:${settings.contactEmail}`}
+                      className="flex items-center gap-3 transition-colors hover:text-white"
+                    >
+                      <Mail size={16} className="shrink-0 text-[#a7f3c0]" />
+                      {settings.contactEmail}
+                    </a>
+                  ) : null}
+                </div>
               </div>
+
+              <a
+                href={directionsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-bold text-[#14532d] transition-colors hover:bg-[#dcfce7]"
+              >
+                <MapPin size={16} /> Get Directions
+              </a>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
