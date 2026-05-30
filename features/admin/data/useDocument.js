@@ -11,7 +11,9 @@ export function useDocument(collectionKey, { enabled = true } = {}) {
   const repo = useMemo(() => createAdminRepo(), []);
   const [documentId, setDocumentId] = useState("");
   const [data, setData] = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  // Starts true: the hook loads on mount, and consumers that hydrate a one-time
+  // form from `data` must wait for the real document instead of seeding empties.
+  const [isLoading, setIsLoading] = useState(enabled);
   const [error, setError] = useState("");
 
   const load = useCallback(async () => {

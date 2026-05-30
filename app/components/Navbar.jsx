@@ -7,19 +7,22 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useSiteSettings } from "../../lib/useSiteContent";
 
-const navItems = [
+const DEFAULT_NAV_ITEMS = [
   { label: "Home", href: "/" },
   { label: "About", href: "/about" },
   { label: "Programs", href: "/programs" },
   { label: "Gallery", href: "/gallery" },
   { label: "Blog", href: "/blog" },
-  { label: "Partner With Us", href: "/partner-with-us", hasDropdown: true },
+  { label: "Partner With Us", href: "/partner-with-us" },
+  { label: "Members", href: "/members" },
   { label: "Contact", href: "/contact" },
 ];
 
+// The Partner item keeps a dropdown regardless of where it sits in the (editable)
+// nav order. Detected by href so admin-managed nav items get it automatically.
+const PARTNER_HREF = "/partner-with-us";
 const partnerDropdownItems = [
   { label: "Register With Us", href: "/register-now" },
-  { label: "Members", href: "/members" },
 ];
 
 function normalizePath(path) {
@@ -32,6 +35,10 @@ function normalizePath(path) {
 export default function Navbar() {
   const pathname = normalizePath(usePathname());
   const settings = useSiteSettings();
+  const navItems =
+    Array.isArray(settings.navItems) && settings.navItems.length
+      ? settings.navItems
+      : DEFAULT_NAV_ITEMS;
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -89,7 +96,7 @@ export default function Navbar() {
           {navItems.map((item) => {
             const isActive = isActiveNavItem(item.href);
 
-            if (item.hasDropdown) {
+            if (item.href === PARTNER_HREF) {
               return (
                 <li key={item.href} className="group relative">
                   <Link
@@ -186,7 +193,7 @@ export default function Navbar() {
             {navItems.map((item) => {
               const isActive = isActiveNavItem(item.href);
 
-              if (item.hasDropdown) {
+              if (item.href === PARTNER_HREF) {
                 return (
                   <li key={`mobile-${item.href}`} className="space-y-2">
                     <Link
