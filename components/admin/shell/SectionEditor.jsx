@@ -7,6 +7,7 @@ import { FieldRenderer } from "@/components/admin/fields/FieldRenderer";
 import { useToast } from "@/components/admin/ui/Toast";
 import { useUnsavedChanges } from "@/features/admin/state/UnsavedChangesProvider";
 import { validateSectionFields } from "@/features/admin/utils/sectionPreview";
+import { safeParseJson } from "@/features/admin/utils/json";
 
 // Right slide-over that edits ONE page section (2–5 fields). Owns its own draft
 // state, dirty tracking (wired to the global guard), required-field validation,
@@ -21,10 +22,17 @@ export function SectionEditor({ open, section, values, onClose, onSave }) {
   // Seed the draft from current values whenever a section opens.
   const seed = useMemo(() => {
     if (!section) return {};
-    const defaultFor = (type) => (type === "toggle" ? false : type === "stringList" ? [] : "");
+    const arrayTypes = ["stringList", "imageList", "valuesList"];
+    const defaultFor = (type) => (type === "toggle" ? false : arrayTypes.includes(type) ? [] : "");
     return section.fields.reduce((acc, f) => {
       const v = values?.[f.key];
-      acc[f.key] = v ?? defaultFor(f.type);
+      // JSON-encoded fields (e.g. coreValues) are stored as a string but edited
+      // as an array/object — parse on the way in.
+      if (f.json) {
+        acc[f.key] = safeParseJson(v, defaultFor(f.type));
+      } else {
+        acc[f.key] = v ?? defaultFor(f.type);
+      }
       return acc;
     }, {});
   }, [section, values]);
@@ -57,7 +65,12 @@ export function SectionEditor({ open, section, values, onClose, onSave }) {
     }
     setIsSaving(true);
     try {
-      await onSave(draft);
+      // Serialize JSON-encoded fields back to strings for storage.
+      const payload = { ...draft };
+      section.fields.forEach((f) => {
+        if (f.json) payload[f.key] = JSON.stringify(draft[f.key] ?? []);
+      });
+      await onSave(payload);
       setDirty(false);
       toast({ message: `${section.title} saved`, tone: "success" });
       onClose();

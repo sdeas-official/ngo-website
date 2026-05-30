@@ -6,6 +6,8 @@ import { ImageField } from "@/components/admin/fields/ImageField";
 import { YouTubeField } from "@/components/admin/fields/YouTubeField";
 import { ToggleField } from "@/components/admin/fields/ToggleField";
 import { StringListField } from "@/components/admin/fields/StringListField";
+import { ImageListField } from "@/components/admin/fields/ImageListField";
+import { ValuesList } from "@/components/admin/fields/ValuesList";
 
 // Maps a single field config (from the *.config.js schemas) to its primitive.
 // This dispatcher is the heart of the schema-driven forms: adding a content type
@@ -31,6 +33,10 @@ export function FieldRenderer({ field, value, onChange, error }) {
       );
     case "stringList":
       return <StringListField {...common} placeholderPrefix={field.itemLabel || "Item"} />;
+    case "imageList":
+      return <ImageListField label={field.label} value={value} onChange={onChange} />;
+    case "valuesList":
+      return <ValuesList label={field.label} value={value} onChange={onChange} />;
     case "number":
       return <TextField {...common} type="number" min={field.min ?? 1} step={field.step ?? 1} placeholder={field.placeholder} />;
     case "datetime":

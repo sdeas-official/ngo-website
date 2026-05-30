@@ -1,21 +1,21 @@
 "use client";
 
 import { useState } from "react";
-import { Users } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
 import { aboutPage } from "@/features/admin/config/pages.config";
 import { useAboutDocument } from "@/features/admin/data/useAboutDocument";
 import { SectionCard } from "@/components/admin/ui/SectionCard";
 import { SectionEditor } from "@/components/admin/shell/SectionEditor";
-import { AboutMembersEditor } from "@/components/admin/shell/AboutMembersEditor";
 import { Card } from "@/components/admin/ui/Card";
 import { SkeletonCards } from "@/components/admin/ui/Skeleton";
 import { computeSectionPreview } from "@/features/admin/utils/sectionPreview";
 import { usePageChrome } from "@/features/admin/state/PageChromeProvider";
 
 export default function AboutPageEditor() {
-  const { page, members, isLoading, error, save } = useAboutDocument();
+  const router = useRouter();
+  const { data, isLoading, error, saveFields } = useAboutDocument();
   const [activeSectionId, setActiveSectionId] = useState(null);
-  const [membersOpen, setMembersOpen] = useState(false);
 
   usePageChrome({
     breadcrumb: "Pages",
@@ -25,6 +25,7 @@ export default function AboutPageEditor() {
   });
 
   const activeSection = aboutPage.sections.find((s) => s.id === activeSectionId) || null;
+  const sectionById = (id) => aboutPage.sections.find((s) => s.id === id);
 
   return (
     <div className="space-y-5">
@@ -37,52 +38,55 @@ export default function AboutPageEditor() {
       ) : null}
 
       {isLoading ? (
-        <SkeletonCards count={4} />
+        <SkeletonCards count={7} />
       ) : (
         <div className="space-y-3">
-          {aboutPage.sections.map((section) => {
-            const { summary, thumbnails } = computeSectionPreview(section, page);
+          {aboutPage.overview.map((item, index) => {
+            if (item.type === "section") {
+              const section = sectionById(item.id);
+              if (!section) return null;
+              const { summary, thumbnails } = computeSectionPreview(section, data);
+              return (
+                <SectionCard
+                  key={section.id}
+                  title={section.title}
+                  description={section.description}
+                  summary={summary}
+                  thumbnails={thumbnails}
+                  onEdit={() => setActiveSectionId(section.id)}
+                />
+              );
+            }
+
             return (
-              <SectionCard
-                key={section.id}
-                title={section.title}
-                summary={summary}
-                thumbnails={thumbnails}
-                onEdit={() => setActiveSectionId(section.id)}
-              />
+              <Card
+                key={`link-${index}`}
+                as="button"
+                interactive
+                onClick={() => router.push(item.href)}
+                className="flex w-full items-center justify-between gap-4 p-4"
+              >
+                <div className="text-left">
+                  <h3 className="text-sm font-bold tracking-wide text-ink uppercase">
+                    {item.title}
+                  </h3>
+                  <p className="mt-1 text-sm text-ink-soft">{item.description}</p>
+                </div>
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600">
+                  Manage <ChevronRight className="h-4 w-4" />
+                </span>
+              </Card>
             );
           })}
-
-          <Card as="button" interactive onClick={() => setMembersOpen(true)} className="flex w-full items-center justify-between gap-4 p-4">
-            <div className="flex items-center gap-3 text-left">
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-500/10 text-brand-600">
-                <Users className="h-5 w-5" />
-              </span>
-              <div>
-                <h3 className="text-sm font-bold tracking-wide text-ink uppercase">Team Members</h3>
-                <p className="mt-0.5 text-sm text-ink-soft">
-                  {members.filter((m) => m.MemberPosition || m.MembersImage).length} member(s)
-                </p>
-              </div>
-            </div>
-            <span className="text-xs font-semibold text-brand-600">Manage →</span>
-          </Card>
         </div>
       )}
 
       <SectionEditor
         open={Boolean(activeSection)}
         section={activeSection}
-        values={page}
+        values={data}
         onClose={() => setActiveSectionId(null)}
-        onSave={(draft) => save({ ...page, ...draft }, members)}
-      />
-
-      <AboutMembersEditor
-        open={membersOpen}
-        members={members}
-        onClose={() => setMembersOpen(false)}
-        onSave={(nextMembers) => save(page, nextMembers)}
+        onSave={saveFields}
       />
     </div>
   );

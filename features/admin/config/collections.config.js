@@ -292,10 +292,60 @@ export const ongoingProjectsCollection = {
   },
 };
 
+export const teamCollection = {
+  key: "team",
+  label: "Team Members",
+  singular: "Team Member",
+  collectionKey: "teamMembers",
+  list: {
+    titleField: "name",
+    subtitleField: "role",
+    imageField: "image",
+    searchFields: ["name", "role"],
+  },
+  editor: {
+    groups: [
+      {
+        title: "Person",
+        fields: [
+          { key: "name", label: "Name", type: "text", required: true },
+          { key: "role", label: "Role", type: "text" },
+          { key: "designation", label: "Designation", type: "text" },
+          { key: "image", label: "Photo", type: "image" },
+        ],
+      },
+      {
+        title: "Ordering",
+        fields: [{ key: "sortOrder", label: "Sort order (lower shows first)", type: "number" }],
+      },
+    ],
+  },
+  emptyValues: { name: "", role: "", designation: "", image: "", sortOrder: "" },
+  toForm(doc) {
+    return {
+      name: str(doc.name),
+      role: str(doc.role),
+      designation: str(doc.designation),
+      image: str(doc.image),
+      sortOrder: typeof doc.sortOrder === "number" ? String(doc.sortOrder) : str(doc.sortOrder),
+    };
+  },
+  toPayload(form) {
+    return {
+      name: (form.name || "").trim(),
+      role: (form.role || "").trim(),
+      designation: (form.designation || "").trim(),
+      image: (form.image || "").trim(),
+      sortOrder: Number.isFinite(Number(form.sortOrder)) ? Number(form.sortOrder || 0) : 0,
+    };
+  },
+};
+
 export const collectionsByKey = {
   blog: blogCollection,
   programs: programsCollection,
   testimonials: testimonialsCollection,
   donations: donationsCollection,
   ongoing: ongoingProjectsCollection,
+  team: teamCollection,
 };

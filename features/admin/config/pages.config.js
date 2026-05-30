@@ -127,16 +127,46 @@ export const homePage = {
 export const aboutPage = {
   key: "about",
   label: "About Us",
-  description: "Edit your About page content and team members.",
+  description: "Sections are listed in the same order they appear on your live About page.",
+  // Story/Mission/Vision text+image live in about_us_page; everything else
+  // (hero, stats, headings, vision images, core values) lives in about_page.
+  collections: ["about", "aboutPage"],
   primaryCollection: "about",
   sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroTitleTop",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "aboutPage" },
+        { key: "heroTitleTop", label: "Heading — line 1", type: "text", collection: "aboutPage" },
+        { key: "heroTitleBottom", label: "Heading — line 2 (highlighted)", type: "text", collection: "aboutPage" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "aboutPage" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "aboutPage" },
+      ],
+    },
+    {
+      id: "stats",
+      title: "Stats Bar",
+      description: "The green strip of headline numbers.",
+      summary: "list:statLabels",
+      fields: [
+        { key: "statNumbers", label: "Stat numbers (e.g. 4,000+)", type: "stringList", collection: "aboutPage" },
+        { key: "statLabels", label: "Stat labels (e.g. Youth Trained)", type: "stringList", collection: "aboutPage" },
+      ],
+    },
     {
       id: "story",
       title: "Our Story",
       summary: "text:OurStoryText",
       fields: [
+        { key: "storyEyebrow", label: "Eyebrow", type: "text", collection: "aboutPage" },
+        { key: "storyHeading", label: "Heading", type: "text", collection: "aboutPage" },
+        { key: "OurStoryText", label: "Story text (one paragraph per line)", type: "textarea", collection: "about" },
         { key: "OurStoryImage", label: "Story image", type: "image", collection: "about" },
-        { key: "OurStoryText", label: "Story text", type: "textarea", collection: "about" },
+        { key: "storyBadgeLabel", label: "Floating badge — label", type: "text", collection: "aboutPage" },
+        { key: "storyBadgeValue", label: "Floating badge — value", type: "text", collection: "aboutPage" },
       ],
     },
     {
@@ -144,8 +174,10 @@ export const aboutPage = {
       title: "Our Mission",
       summary: "text:OurMissionText",
       fields: [
-        { key: "OurMissionImage", label: "Mission image", type: "image", collection: "about" },
+        { key: "missionEyebrow", label: "Eyebrow", type: "text", collection: "aboutPage" },
+        { key: "missionHeading", label: "Heading", type: "text", collection: "aboutPage" },
         { key: "OurMissionText", label: "Mission text", type: "textarea", collection: "about" },
+        { key: "OurMissionImage", label: "Mission image", type: "image", collection: "about" },
       ],
     },
     {
@@ -153,9 +185,49 @@ export const aboutPage = {
       title: "Our Vision",
       summary: "text:OurVisionText",
       fields: [
-        { key: "OurVisionImage", label: "Vision image", type: "image", collection: "about" },
-        { key: "OurVisionText", label: "Vision text", type: "textarea", collection: "about" },
+        { key: "visionEyebrow", label: "Eyebrow", type: "text", collection: "aboutPage" },
+        { key: "visionHeading", label: "Heading", type: "text", collection: "aboutPage" },
+        { key: "OurVisionText", label: "Vision text (one paragraph per line)", type: "textarea", collection: "about" },
+        { key: "visionImages", label: "Vision images (shown in the grid)", type: "imageList", collection: "aboutPage" },
       ],
+    },
+    {
+      id: "values",
+      title: "Core Values",
+      summary: "text:valuesHeading",
+      fields: [
+        { key: "valuesEyebrow", label: "Eyebrow", type: "text", collection: "aboutPage" },
+        { key: "valuesHeading", label: "Heading", type: "text", collection: "aboutPage" },
+        { key: "valuesSubtitle", label: "Subtitle", type: "textarea", collection: "aboutPage" },
+        { key: "coreValues", label: "Values", type: "valuesList", collection: "aboutPage", json: true },
+      ],
+    },
+    {
+      id: "teamHeading",
+      title: "Team — heading",
+      description: "The heading above your leadership cards.",
+      summary: "text:teamHeading",
+      fields: [
+        { key: "teamEyebrow", label: "Eyebrow", type: "text", collection: "aboutPage" },
+        { key: "teamHeading", label: "Heading", type: "text", collection: "aboutPage" },
+        { key: "teamSubtitle", label: "Subtitle", type: "textarea", collection: "aboutPage" },
+      ],
+    },
+  ],
+  // Same order as the live About page; the team cards are their own collection.
+  overview: [
+    { type: "section", id: "hero" },
+    { type: "section", id: "stats" },
+    { type: "section", id: "story" },
+    { type: "section", id: "mission" },
+    { type: "section", id: "vision" },
+    { type: "section", id: "values" },
+    { type: "section", id: "teamHeading" },
+    {
+      type: "link",
+      title: "Team Members",
+      description: "Add, edit and reorder the leadership cards.",
+      href: "/admin/collections/team",
     },
   ],
 };

@@ -10,6 +10,7 @@ export const navGroups = [
     items: [
       { key: "home", label: "Home Page", href: "/admin/pages/home", icon: "file" },
       { key: "about", label: "About Us", href: "/admin/pages/about", icon: "file" },
+      { key: "team", label: "Team Members", href: "/admin/collections/team", icon: "users", badge: "team" },
       { key: "gallery", label: "Gallery", href: "/admin/pages/gallery", icon: "image" },
     ],
   },

@@ -15,6 +15,8 @@ const COLLECTION_FALLBACKS = {
   homeEventsUpdates: "home_events_and_updates_",
   ongoingProjects: "ongoing_projects",
   siteSettings: "site_settings",
+  aboutPage: "about_page",
+  teamMembers: "team_members",
   registrations: "registration_",
 };
 
