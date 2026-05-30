@@ -17,6 +17,8 @@ const COLLECTION_FALLBACKS = {
   siteSettings: "site_settings",
   aboutPage: "about_page",
   teamMembers: "team_members",
+  programsContent: "programs_content",
+  blogContent: "blog_content",
   registrations: "registration_",
 };
 

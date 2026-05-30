@@ -232,6 +232,113 @@ export const aboutPage = {
   ],
 };
 
+export const programsPage = {
+  key: "programs",
+  label: "Programs Page",
+  description: "Sections are listed in the same order they appear on your live Programs page.",
+  collections: ["programsContent"],
+  sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroTitleTop",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "programsContent" },
+        { key: "heroTitleTop", label: "Heading — line 1", type: "text", collection: "programsContent" },
+        { key: "heroTitleBottom", label: "Heading — line 2 (highlighted)", type: "text", collection: "programsContent" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "programsContent" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "programsContent" },
+      ],
+    },
+    {
+      id: "special",
+      title: "Special Programs",
+      description: "The 'Special Programs & Initiatives' card grid.",
+      summary: "text:specialHeading",
+      fields: [
+        { key: "specialHeading", label: "Heading", type: "text", collection: "programsContent" },
+        { key: "specialSubtitle", label: "Subtitle", type: "textarea", collection: "programsContent" },
+        {
+          key: "specialPrograms",
+          label: "Cards (icon = a Lucide icon name, e.g. Flame, Shield, BookOpen)",
+          type: "valuesList",
+          collection: "programsContent",
+          json: true,
+        },
+      ],
+    },
+    {
+      id: "cta",
+      title: "Call to Action",
+      description: "The closing 'Ready to Make a Difference?' banner.",
+      summary: "text:ctaHeading",
+      fields: [
+        { key: "ctaHeading", label: "Heading", type: "text", collection: "programsContent" },
+        { key: "ctaSubtitle", label: "Subtitle", type: "textarea", collection: "programsContent" },
+        { key: "ctaPrimaryLabel", label: "Primary button label", type: "text", collection: "programsContent" },
+        { key: "ctaPrimaryHref", label: "Primary button link", type: "text", collection: "programsContent" },
+        { key: "ctaSecondaryLabel", label: "Secondary button label", type: "text", collection: "programsContent" },
+        { key: "ctaSecondaryHref", label: "Secondary button link", type: "text", collection: "programsContent" },
+      ],
+    },
+  ],
+  overview: [
+    { type: "section", id: "hero" },
+    {
+      type: "link",
+      title: "Program Sections",
+      description: "The main program blocks (Education, Healthcare, Community…).",
+      href: "/admin/collections/programs",
+    },
+    { type: "section", id: "special" },
+    { type: "section", id: "cta" },
+  ],
+};
+
+export const blogPage = {
+  key: "blog",
+  label: "Blog Page",
+  description: "Edit the blog page banner and section headings. Posts are managed under Content → Blog Posts.",
+  collections: ["blogContent"],
+  sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroHeading",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "blogContent" },
+        { key: "heroHeading", label: "Heading", type: "text", collection: "blogContent" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "blogContent" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "blogContent" },
+        { key: "featuredLabel", label: "Featured post badge label", type: "text", collection: "blogContent" },
+      ],
+    },
+    {
+      id: "recent",
+      title: "Latest Articles heading",
+      description: "The heading above the recent-posts grid.",
+      summary: "text:recentHeading",
+      fields: [
+        { key: "recentEyebrow", label: "Eyebrow", type: "text", collection: "blogContent" },
+        { key: "recentHeading", label: "Heading", type: "text", collection: "blogContent" },
+        { key: "recentSubtitle", label: "Subtitle", type: "textarea", collection: "blogContent" },
+      ],
+    },
+  ],
+  overview: [
+    { type: "section", id: "hero" },
+    {
+      type: "link",
+      title: "Blog Posts",
+      description: "Write, edit and delete the articles shown on this page.",
+      href: "/admin/collections/blog",
+    },
+    { type: "section", id: "recent" },
+  ],
+};
+
 export const galleryFields = [
   { key: "AllImages", label: "All" },
   { key: "TrainingImages", label: "Training" },
@@ -241,4 +348,6 @@ export const galleryFields = [
 export const pagesByKey = {
   home: homePage,
   about: aboutPage,
+  programs: programsPage,
+  blog: blogPage,
 };
