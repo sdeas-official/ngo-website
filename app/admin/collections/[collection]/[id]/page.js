@@ -19,7 +19,11 @@ export default function CollectionRecordPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  usePageChrome({ breadcrumb: config.label, title: `Edit ${config.singular}` });
+  usePageChrome({
+    breadcrumb: config.label,
+    breadcrumbHref: `/admin/collections/${collection}`,
+    title: `Edit ${config.singular}`,
+  });
 
   useEffect(() => {
     let mounted = true;

@@ -19,6 +19,7 @@ export default function AboutPageEditor() {
 
   usePageChrome({
     breadcrumb: "Pages",
+    breadcrumbHref: "/admin",
     title: "About Us",
     status: error ? { label: "Load error", tone: "alert" } : { label: "Saved", tone: "success" },
   });

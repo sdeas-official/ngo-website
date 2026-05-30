@@ -50,6 +50,7 @@ export function AdminShell({ children }) {
           <Topbar
             title={chrome.title}
             breadcrumb={chrome.breadcrumb}
+            breadcrumbHref={chrome.breadcrumbHref}
             status={chrome.status}
             actions={chrome.actions}
             onOpenMenu={() => setMobileOpen(true)}

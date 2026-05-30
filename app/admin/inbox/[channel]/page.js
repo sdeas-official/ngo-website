@@ -63,6 +63,7 @@ export default function InboxChannelPage({ params }) {
 
   usePageChrome({
     breadcrumb: "Inbox",
+    breadcrumbHref: "/admin",
     title: config.label,
     status: isRegistrations
       ? { label: `${pendingCount} pending`, tone: pendingCount ? "warning" : "neutral" }

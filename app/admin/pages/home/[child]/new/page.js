@@ -11,7 +11,11 @@ export default function HomeChildNewPage({ params }) {
   const config = homeChildrenByKey[child];
   if (!config) notFound();
 
-  usePageChrome({ breadcrumb: config.label, title: `New ${config.singular}` });
+  usePageChrome({
+    breadcrumb: config.label,
+    breadcrumbHref: `/admin/pages/home/${child}`,
+    title: `New ${config.singular}`,
+  });
 
   return <RecordEditor config={config} doc={null} backHref={`/admin/pages/home/${child}`} />;
 }

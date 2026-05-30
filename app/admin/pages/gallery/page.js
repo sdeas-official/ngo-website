@@ -25,6 +25,7 @@ export default function GalleryManagerPage() {
 
   usePageChrome({
     breadcrumb: "Pages",
+    breadcrumbHref: "/admin",
     title: "Gallery",
     status: error ? { label: "Load error", tone: "alert" } : { label: "Auto-saves", tone: "neutral" },
   });

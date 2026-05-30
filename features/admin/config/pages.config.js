@@ -39,17 +39,6 @@ export const homePage = {
       ],
     },
     {
-      id: "banners",
-      title: "Banner Images",
-      description: "Supporting banner images used across the site.",
-      summary: "imageCount",
-      fields: [
-        { key: "BannerImageOne", label: "Banner 1", type: "image", collection: "home" },
-        { key: "BannerImageTwo", label: "Banner 2", type: "image", collection: "home" },
-        { key: "BannerImageThree", label: "Banner 3", type: "image", collection: "home" },
-      ],
-    },
-    {
       id: "mission",
       title: "Mission section",
       description: "The 'Our Mission' block with heading, text and image.",
@@ -93,41 +82,44 @@ export const homePage = {
         { key: "csrVideo", label: "YouTube video URL", type: "youtube", collection: "homeTwo" },
       ],
     },
-    {
-      id: "programsIntro",
-      title: "Our Programs — intro",
-      description: "The heading, blurb, and image above your program cards.",
-      summary: "text:ourProgrammsTitle",
-      fields: [
-        { key: "ourProgrammsTitle", label: "Section title", type: "text", collection: "homeTwo" },
-        { key: "ourProgrammsText", label: "Section text", type: "textarea", collection: "homeTwo" },
-        { key: "ourProgrammsImage", label: "Section image", type: "image", collection: "homeTwo" },
-      ],
-    },
-    {
-      id: "eventsIntro",
-      title: "Events & Updates — intro",
-      description: "The heading, blurb, and image above your events list.",
-      summary: "text:EventsHeading",
-      fields: [
-        { key: "EventsHeading", label: "Section heading", type: "text", collection: "homeTwo" },
-        { key: "EventsText", label: "Section text", type: "textarea", collection: "homeTwo" },
-        { key: "EventsImage", label: "Section image", type: "image", collection: "homeTwo" },
-      ],
-    },
   ],
-  // Child collections surfaced as their own managers on the Home page.
-  childCollections: [
+  // The home-page overview, in the SAME ORDER the sections appear on the live
+  // landing page. type "section" opens the slide-over editor (a field section
+  // above); type "link" jumps to the collection/page that renders in that spot.
+  overview: [
+    { type: "section", id: "hero" },
     {
-      id: "homePrograms",
-      title: "Our Programs — cards",
-      collectionKey: "homeOurPrograms",
-      max: 3,
+      type: "link",
+      title: "Our Programs",
+      description: "The program cards shown right below the hero.",
+      href: "/admin/pages/home/programs",
+    },
+    { type: "section", id: "mission" },
+    { type: "section", id: "vision" },
+    {
+      type: "link",
+      title: "Ongoing Projects",
+      description: "The CSR projects carousel.",
+      href: "/admin/collections/ongoing",
     },
     {
-      id: "homeEvents",
-      title: "Events & Updates — entries",
-      collectionKey: "homeEventsUpdates",
+      type: "link",
+      title: "Testimonials",
+      description: "The video testimonials slider.",
+      href: "/admin/collections/testimonials",
+    },
+    { type: "section", id: "csr" },
+    {
+      type: "link",
+      title: "Events & Updates",
+      description: "The latest-articles cards near the bottom.",
+      href: "/admin/pages/home/events",
+    },
+    {
+      type: "link",
+      title: "Get In Touch",
+      description: "Closing call-to-action heading & text (in Site Settings).",
+      href: "/admin/site-settings",
     },
   ],
 };

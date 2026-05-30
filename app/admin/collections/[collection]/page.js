@@ -23,7 +23,8 @@ export default function CollectionListPage({ params }) {
   const atMax = config.max && documents.length >= config.max;
 
   usePageChrome({
-    breadcrumb: "Content",
+    breadcrumb: collection === "ongoing" ? "Site" : "Content",
+    breadcrumbHref: "/admin",
     title: config.label,
     status: error ? { label: "Load error", tone: "alert" } : undefined,
     actions: (

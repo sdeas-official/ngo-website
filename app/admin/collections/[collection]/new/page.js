@@ -11,7 +11,11 @@ export default function CollectionNewRecordPage({ params }) {
   const config = collectionsByKey[collection];
   if (!config) notFound();
 
-  usePageChrome({ breadcrumb: config.label, title: `New ${config.singular}` });
+  usePageChrome({
+    breadcrumb: config.label,
+    breadcrumbHref: `/admin/collections/${collection}`,
+    title: `New ${config.singular}`,
+  });
 
   return <RecordEditor config={config} doc={null} backHref={`/admin/collections/${collection}`} />;
 }

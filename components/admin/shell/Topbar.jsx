@@ -2,16 +2,25 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ExternalLink, LogOut, Menu } from "lucide-react";
+import { ChevronLeft, ExternalLink, LogOut, Menu } from "lucide-react";
 import { Button } from "@/components/admin/ui/Button";
 import { Badge } from "@/components/admin/ui/Badge";
+import { useUnsavedChanges } from "@/features/admin/state/UnsavedChangesProvider";
 
 // Top bar: mobile menu toggle, breadcrumb/title, save-status pill, and global
 // actions (View site / Logout). Per-page primary actions are injected via
-// `actions` so each screen controls its own Save button.
-export function Topbar({ title, breadcrumb, status, actions, onOpenMenu }) {
+// `actions` so each screen controls its own Save button. When `breadcrumbHref`
+// is set the breadcrumb becomes a clickable "back to parent" control.
+export function Topbar({ title, breadcrumb, breadcrumbHref, status, actions, onOpenMenu }) {
   const router = useRouter();
+  const { confirmDiscard } = useUnsavedChanges();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  function goToBreadcrumb() {
+    if (!breadcrumbHref) return;
+    if (!confirmDiscard()) return;
+    router.push(breadcrumbHref);
+  }
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -35,7 +44,16 @@ export function Topbar({ title, breadcrumb, status, actions, onOpenMenu }) {
       </button>
 
       <div className="min-w-0 flex-1">
-        {breadcrumb ? (
+        {breadcrumb && breadcrumbHref ? (
+          <button
+            type="button"
+            onClick={goToBreadcrumb}
+            className="inline-flex items-center gap-1 text-xs font-semibold tracking-wide text-ink-soft uppercase transition-colors hover:text-brand-600"
+          >
+            <ChevronLeft className="h-3.5 w-3.5" />
+            {breadcrumb}
+          </button>
+        ) : breadcrumb ? (
           <p className="truncate text-xs font-semibold tracking-wide text-ink-soft uppercase">
             {breadcrumb}
           </p>

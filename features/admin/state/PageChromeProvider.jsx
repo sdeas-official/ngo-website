@@ -10,8 +10,10 @@ import { createContext, useContext, useEffect, useState } from "react";
 const ChromeValueContext = createContext(null);
 const ChromeSetContext = createContext(null);
 
+const EMPTY_CHROME = { title: "", breadcrumb: "", breadcrumbHref: "", status: null, actions: null };
+
 export function PageChromeProvider({ children }) {
-  const [chrome, setChrome] = useState({ title: "", breadcrumb: "", status: null, actions: null });
+  const [chrome, setChrome] = useState(EMPTY_CHROME);
   return (
     <ChromeSetContext.Provider value={setChrome}>
       <ChromeValueContext.Provider value={chrome}>{children}</ChromeValueContext.Provider>
@@ -21,7 +23,7 @@ export function PageChromeProvider({ children }) {
 
 // Read-only consumer for the shell's Topbar.
 export function usePageChromeValue() {
-  return useContext(ChromeValueContext) || { title: "", breadcrumb: "", status: null, actions: null };
+  return useContext(ChromeValueContext) || EMPTY_CHROME;
 }
 
 // Hook used by pages. Depends on primitive status fields (not object identity) so
@@ -29,7 +31,7 @@ export function usePageChromeValue() {
 // subscribe to the stable set-context, setChrome never re-renders the page, so
 // including `actions` (a new JSX node each render) in deps is safe — no loop — and
 // keeps action buttons (e.g. a disabled "New" at max) in sync with page state.
-export function usePageChrome({ title, breadcrumb, status, actions } = {}) {
+export function usePageChrome({ title, breadcrumb, breadcrumbHref, status, actions } = {}) {
   const setChrome = useContext(ChromeSetContext);
   const statusLabel = status?.label ?? null;
   const statusTone = status?.tone ?? null;
@@ -39,9 +41,10 @@ export function usePageChrome({ title, breadcrumb, status, actions } = {}) {
     setChrome({
       title: title || "",
       breadcrumb: breadcrumb || "",
+      breadcrumbHref: breadcrumbHref || "",
       status: statusLabel ? { label: statusLabel, tone: statusTone } : null,
       actions,
     });
-    return () => setChrome({ title: "", breadcrumb: "", status: null, actions: null });
-  }, [title, breadcrumb, statusLabel, statusTone, actions, setChrome]);
+    return () => setChrome(EMPTY_CHROME);
+  }, [title, breadcrumb, breadcrumbHref, statusLabel, statusTone, actions, setChrome]);
 }

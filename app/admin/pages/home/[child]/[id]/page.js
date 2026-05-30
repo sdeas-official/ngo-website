@@ -19,7 +19,11 @@ export default function HomeChildRecordPage({ params }) {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
-  usePageChrome({ breadcrumb: config.label, title: `Edit ${config.singular}` });
+  usePageChrome({
+    breadcrumb: config.label,
+    breadcrumbHref: `/admin/pages/home/${child}`,
+    title: `Edit ${config.singular}`,
+  });
 
   useEffect(() => {
     let mounted = true;

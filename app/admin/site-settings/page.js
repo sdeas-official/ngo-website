@@ -26,6 +26,7 @@ export default function SiteSettingsPage() {
 
   usePageChrome({
     breadcrumb: "Site",
+    breadcrumbHref: "/admin",
     title: "Site Settings",
     status: error ? { label: "Load error", tone: "alert" } : { label: "Saved", tone: "success" },
   });

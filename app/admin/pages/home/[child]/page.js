@@ -23,6 +23,7 @@ export default function HomeChildListPage({ params }) {
 
   usePageChrome({
     breadcrumb: "Home Page",
+    breadcrumbHref: "/admin/pages/home",
     title: config.label,
     actions: (
       <Button

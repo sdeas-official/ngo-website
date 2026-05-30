@@ -19,15 +19,19 @@ export default function HomePageEditor() {
 
   usePageChrome({
     breadcrumb: "Pages",
+    breadcrumbHref: "/admin",
     title: "Home Page",
     status: error ? { label: "Load error", tone: "alert" } : { label: "Saved", tone: "success" },
   });
 
   const activeSection = homePage.sections.find((s) => s.id === activeSectionId) || null;
+  const sectionById = (id) => homePage.sections.find((s) => s.id === id);
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-ink-soft">{homePage.description}</p>
+      <p className="text-sm text-ink-soft">
+        Sections are listed in the same order they appear on your live home page.
+      </p>
 
       {error ? (
         <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
@@ -36,46 +40,44 @@ export default function HomePageEditor() {
       ) : null}
 
       {isLoading ? (
-        <SkeletonCards count={5} />
+        <SkeletonCards count={6} />
       ) : (
         <div className="space-y-3">
-          {homePage.sections.map((section) => {
-            const { summary, thumbnails } = computeSectionPreview(section, data);
-            return (
-              <SectionCard
-                key={section.id}
-                title={section.title}
-                description={section.description}
-                summary={summary}
-                thumbnails={thumbnails}
-                onEdit={() => setActiveSectionId(section.id)}
-              />
-            );
-          })}
+          {homePage.overview.map((item, index) => {
+            if (item.type === "section") {
+              const section = sectionById(item.id);
+              if (!section) return null;
+              const { summary, thumbnails } = computeSectionPreview(section, data);
+              return (
+                <SectionCard
+                  key={section.id}
+                  title={section.title}
+                  description={section.description}
+                  summary={summary}
+                  thumbnails={thumbnails}
+                  onEdit={() => setActiveSectionId(section.id)}
+                />
+              );
+            }
 
-          {/* Child collections — list-style sub-sections managed on their own pages */}
-          {homePage.childCollections.map((child) => {
-            const href =
-              child.id === "homePrograms"
-                ? "/admin/pages/home/programs"
-                : "/admin/pages/home/events";
+            // Link card → a collection / page that renders in this spot.
             return (
               <Card
-                key={child.id}
+                key={`link-${index}`}
                 as="button"
                 interactive
-                onClick={() => router.push(href)}
+                onClick={() => router.push(item.href)}
                 className="flex w-full items-center justify-between gap-4 p-4"
               >
                 <div className="text-left">
                   <h3 className="text-sm font-bold tracking-wide text-ink uppercase">
-                    {child.title}
+                    {item.title}
                   </h3>
-                  <p className="mt-1 text-sm text-ink-soft">
-                    Manage entries{child.max ? ` (up to ${child.max})` : ""}.
-                  </p>
+                  <p className="mt-1 text-sm text-ink-soft">{item.description}</p>
                 </div>
-                <ChevronRight className="h-5 w-5 shrink-0 text-ink-soft" />
+                <span className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600">
+                  Manage <ChevronRight className="h-4 w-4" />
+                </span>
               </Card>
             );
           })}
