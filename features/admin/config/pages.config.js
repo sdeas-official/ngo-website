@@ -424,6 +424,105 @@ export const partnerPage = {
   ],
 };
 
+export const contactPage = {
+  key: "contact",
+  label: "Contact Page",
+  description:
+    "Sections are listed in the same order they appear on your live Contact page. Email, phone, address and social links are shared site-wide — edit those under Site → Site Settings.",
+  collections: ["contactPage"],
+  sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroHeading",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "contactPage" },
+        { key: "heroHeading", label: "Heading", type: "text", collection: "contactPage" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "contactPage" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "contactPage" },
+      ],
+    },
+    {
+      id: "aside",
+      title: "Get In Touch — intro",
+      description: "The heading and text above the contact detail cards.",
+      summary: "text:asideHeading",
+      fields: [
+        { key: "asideEyebrow", label: "Eyebrow", type: "text", collection: "contactPage" },
+        { key: "asideHeading", label: "Heading", type: "text", collection: "contactPage" },
+        { key: "asideText", label: "Paragraph", type: "textarea", collection: "contactPage" },
+      ],
+    },
+    {
+      id: "details",
+      title: "Contact detail cards",
+      description: "Card titles + the office address. Email & phone come from Site Settings.",
+      summary: "text:officesTitle",
+      fields: [
+        { key: "officesTitle", label: "Offices card title", type: "text", collection: "contactPage" },
+        { key: "officesAddress", label: "Office address (one line per address row)", type: "textarea", collection: "contactPage" },
+        { key: "emailTitle", label: "Email card title", type: "text", collection: "contactPage" },
+        { key: "phoneTitle", label: "Phone card title", type: "text", collection: "contactPage" },
+        { key: "followLabel", label: "'Follow Us' label", type: "text", collection: "contactPage" },
+      ],
+    },
+    {
+      id: "hours",
+      title: "Office Hours",
+      description: "The opening-hours card.",
+      summary: "text:hoursTitle",
+      fields: [
+        { key: "hoursTitle", label: "Card title", type: "text", collection: "contactPage" },
+        { key: "weekdaysLabel", label: "Weekdays label", type: "text", collection: "contactPage" },
+        { key: "weekdaysText", label: "Weekdays hours (one line per row)", type: "textarea", collection: "contactPage" },
+        { key: "weekendsLabel", label: "Weekends label", type: "text", collection: "contactPage" },
+        { key: "weekendsText", label: "Weekends hours (one line per row)", type: "textarea", collection: "contactPage" },
+      ],
+    },
+    {
+      id: "form",
+      title: "Message form — heading",
+      summary: "text:formHeading",
+      fields: [
+        { key: "formHeading", label: "Form heading", type: "text", collection: "contactPage" },
+      ],
+    },
+    {
+      id: "map",
+      title: "Find Us / Map section",
+      description: "The map block at the bottom. Paste a Google Maps embed URL to show a live map.",
+      summary: "text:mapHeading",
+      fields: [
+        { key: "mapEyebrow", label: "Eyebrow", type: "text", collection: "contactPage" },
+        { key: "mapHeading", label: "Heading", type: "text", collection: "contactPage" },
+        { key: "mapAddress", label: "Address shown in the block", type: "textarea", collection: "contactPage" },
+        { key: "mapEmbedUrl", label: "Google Maps embed URL (optional)", type: "text", collection: "contactPage" },
+      ],
+    },
+  ],
+  overview: [
+    { type: "section", id: "hero" },
+    { type: "section", id: "aside" },
+    { type: "section", id: "details" },
+    {
+      type: "link",
+      title: "Email, Phone, Address & Socials",
+      description: "These are shared site-wide — edit them in Site Settings.",
+      href: "/admin/site-settings",
+    },
+    { type: "section", id: "hours" },
+    { type: "section", id: "form" },
+    { type: "section", id: "map" },
+    {
+      type: "link",
+      title: "Contact Submissions",
+      description: "Read the messages people send through the form.",
+      href: "/admin/inbox/contact",
+    },
+  ],
+};
+
 export const galleryPage = {
   key: "gallery",
   label: "Gallery Page",
@@ -498,4 +597,5 @@ export const pagesByKey = {
   blog: blogPage,
   partner: partnerPage,
   gallery: galleryPage,
+  contact: contactPage,
 };

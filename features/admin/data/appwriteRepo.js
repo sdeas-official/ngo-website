@@ -22,6 +22,7 @@ const COLLECTION_FALLBACKS = {
   partnerPage: "partner_page",
   donationTiers: "donation_tiers",
   galleryContent: "gallery_content",
+  contactPage: "contact_page",
   registrations: "registration_",
 };
 
