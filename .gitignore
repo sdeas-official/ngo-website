@@ -39,3 +39,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local database backups (contain admin credentials + submitter PII — never commit)
+backups/
