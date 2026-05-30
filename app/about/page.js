@@ -5,6 +5,8 @@ import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { TeamCard } from "../components/TeamCard";
 import { TextHighlight } from "../components/TextHighlight";
+import { createDatabasesClient } from "@/lib/appwriteClient";
+import { Query } from "appwrite";
 
 const stats = [
   { number: "4,000+", label: "Youth Trained" },
@@ -36,35 +38,15 @@ const values = [
   },
 ];
 
-const team = [
-  {
-    name: "Mr. Bikash Patra",
-    role: "Founder & Director",
-    designation: "Assistant Fire Officer, Technical Head",
-    image:
-      "https://images.unsplash.com/photo-1758518727888-ffa196002e59?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBsZWFkZXIlMjBwb3J0cmFpdCUyMHN1aXR8ZW58MXx8fHwxNzcyODI0OTExfDA&ixlib=rb-4.1.0&q=80&w=1080",
-  },
-  {
-    name: "Program Coordinator",
-    role: "Head of Training Programs",
-    designation: "Skill Development Specialist",
-    image:
-      "https://images.unsplash.com/photo-1758873269317-51888e824b28?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxkaXZlcnNlJTIwdGVhbSUyMG1lZXRpbmclMjBjb2xsYWJvcmF0aW9ufGVufDF8fHx8MTc3MjcwMzE4Nnww&ixlib=rb-4.1.0&q=80&w=1080",
-  },
-  {
-    name: "Field Coordinator",
-    role: "Community Outreach Lead",
-    designation: "Rural Development Specialist",
-    image:
-      "https://images.unsplash.com/photo-1759922378123-a1f4f1e39bae?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxlZHVjYXRpb24lMjBjbGFzc3Jvb20lMjBzdHVkZW50cyUyMGxlYXJuaW5nfGVufDF8fHx8MTc3Mjc4MDI4NXww&ixlib=rb-4.1.0&q=80&w=1080",
-  },
-];
-
 export default function About() {
+  const { databases, config } = useMemo(() => createDatabasesClient(), []);
   const statsRef = useRef(null);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [displayStats, setDisplayStats] = useState(stats.map(() => 0));
   const [activeStatSlide, setActiveStatSlide] = useState(0);
+  const [aboutData, setAboutData] = useState(null);
+  const [team, setTeam] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const parsedStats = useMemo(
     () =>
@@ -128,6 +110,91 @@ export default function About() {
 
     return () => clearInterval(timer);
   }, [parsedStats.length]);
+
+  useEffect(() => {
+    const loadAboutData = async () => {
+      if (!databases || !config.databaseId || !config.collections.about) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const result = await databases.listDocuments(
+          config.databaseId,
+          config.collections.about,
+          [Query.limit(100)],
+        );
+
+        if (result.documents && result.documents.length > 0) {
+          const doc = result.documents[0];
+
+          // Extract about data (story, mission, vision)
+          const aboutInfo = {
+            OurStoryImage:
+              typeof doc.OurStoryImage === "string"
+                ? doc.OurStoryImage.trim()
+                : "",
+            OurStoryText:
+              typeof doc.OurStoryText === "string"
+                ? doc.OurStoryText.trim()
+                : "",
+            OurMissionImage:
+              typeof doc.OurMissionImage === "string"
+                ? doc.OurMissionImage.trim()
+                : "",
+            OurMissionText:
+              typeof doc.OurMissionText === "string"
+                ? doc.OurMissionText.trim()
+                : "",
+            OurVisionImage:
+              typeof doc.OurVisionImage === "string"
+                ? doc.OurVisionImage.trim()
+                : "",
+            OurVisionText:
+              typeof doc.OurVisionText === "string"
+                ? doc.OurVisionText.trim()
+                : "",
+          };
+
+          setAboutData(aboutInfo);
+
+          // Extract team members
+          if (Array.isArray(doc.Members) && doc.Members.length > 0) {
+            const members = doc.Members.filter(
+              (member) => member && typeof member === "object",
+            ).map((member) => ({
+              name:
+                typeof member.MembersName === "string"
+                  ? member.MembersName.trim()
+                  : "Team Member",
+              role:
+                typeof member.MemberRole === "string"
+                  ? member.MemberRole.trim()
+                  : "",
+              designation:
+                typeof member.MemberDescription === "string"
+                  ? member.MemberDescription.trim()
+                  : "",
+              image:
+                typeof member.MembersImage === "string"
+                  ? member.MembersImage.trim()
+                  : "",
+            }));
+            setTeam(members);
+          }
+        }
+      } catch (error) {
+        console.error("Failed to load about data:", error);
+        setAboutData(null);
+        setTeam([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadAboutData();
+  }, [databases, config]);
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-white">
@@ -222,7 +289,10 @@ export default function About() {
           <div className="relative">
             <div className="relative h-80 overflow-hidden rounded-3xl sm:h-96 md:h-112">
               <img
-                src="https://images.unsplash.com/photo-1670299160449-58cccb9545ff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                src={
+                  aboutData?.OurStoryImage ||
+                  "https://images.unsplash.com/photo-1670299160449-58cccb9545ff?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+                }
                 alt="Teamwork and community"
                 className="h-full w-full object-cover"
                 loading="lazy"
@@ -247,23 +317,36 @@ export default function About() {
             <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl">
               <TextHighlight>Our Story</TextHighlight>
             </h2>
-            <p className="mt-8 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              SDEAS Welfare Foundation was founded with a clear vision: to
-              bridge the critical gap between education and employment
-              opportunities for youth in rural and underserved communities
-              across India.
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              We recognized that many young people have potential and ambition
-              but lack access to industry-relevant skills. Through strategic
-              partnerships with leading industries, we developed training
-              programs that align with real market demands.
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              Our flagship Industrial Boiler Operation program has achieved an
-              exceptional 99% placement rate, transforming the lives of over
-              4,000 students across Eastern India.
-            </p>
+            {aboutData?.OurStoryText ? (
+              aboutData.OurStoryText.split("\n").map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg"
+                >
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <>
+                <p className="mt-8 text-base leading-relaxed text-[#5f6879] md:text-lg">
+                  SDEAS Welfare Foundation was founded with a clear vision: to
+                  bridge the critical gap between education and employment
+                  opportunities for youth in rural and underserved communities
+                  across India.
+                </p>
+                <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
+                  We recognized that many young people have potential and
+                  ambition but lack access to industry-relevant skills. Through
+                  strategic partnerships with leading industries, we developed
+                  training programs that align with real market demands.
+                </p>
+                <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
+                  Our flagship Industrial Boiler Operation program has achieved
+                  an exceptional 99% placement rate, transforming the lives of
+                  over 4,000 students across Eastern India.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -278,19 +361,33 @@ export default function About() {
             <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238] md:text-6xl">
               <TextHighlight>Our Mission</TextHighlight>
             </h2>
-            <p className="mt-8 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              To empower youth and communities through quality education,
-              industry-aligned skill development, and comprehensive social
-              welfare programs. We strive to create self-reliant individuals and
-              thriving communities by providing access to training, healthcare,
-              and livelihood opportunities that transform lives and contribute
-              to nation-building.
-            </p>
+            {aboutData?.OurMissionText ? (
+              aboutData.OurMissionText.split("\n").map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg"
+                >
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <p className="mt-8 text-base leading-relaxed text-[#5f6879] md:text-lg">
+                To empower youth and communities through quality education,
+                industry-aligned skill development, and comprehensive social
+                welfare programs. We strive to create self-reliant individuals
+                and thriving communities by providing access to training,
+                healthcare, and livelihood opportunities that transform lives
+                and contribute to nation-building.
+              </p>
+            )}
           </div>
 
           <div className="relative h-80 overflow-hidden rounded-3xl sm:h-96 md:h-105">
             <img
-              src="https://images.unsplash.com/photo-1759756480941-7230dedf5fc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+              src={
+                aboutData?.OurMissionImage ||
+                "https://images.unsplash.com/photo-1759756480941-7230dedf5fc9?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1080"
+              }
               alt="Industrial training"
               className="h-full w-full object-cover"
               loading="lazy"
@@ -309,6 +406,30 @@ export default function About() {
             <h2 className="mt-4 font-serif text-4xl font-bold leading-none text-[#1d2238]">
               <TextHighlight>Our Vision</TextHighlight>
             </h2>
+            {aboutData?.OurVisionText ? (
+              aboutData.OurVisionText.split("\n").map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  className="mt-4 text-base leading-relaxed text-[#5f6879]"
+                >
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <>
+                <p className="mt-6 text-base leading-relaxed text-[#5f6879]">
+                  To establish ourselves as a leading force in social
+                  transformation across India — creating a future where every
+                  youth has access to quality skill development and every
+                  community has access to essential healthcare and economic
+                  opportunity.
+                </p>
+                <p className="mt-4 text-base leading-relaxed text-[#5f6879]">
+                  We envision an India where empowered communities drive
+                  economic growth and social progress, with no one left behind.
+                </p>
+              </>
+            )}
           </div>
 
           {/* Photo grid */}
@@ -354,16 +475,30 @@ export default function About() {
               </h2>
             </div>
 
-            <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-lg">
-              To establish ourselves as a leading force in social transformation
-              across India — creating a future where every youth has access to
-              quality skill development and every community has access to
-              essential healthcare and economic opportunity.
-            </p>
-            <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
-              We envision an India where empowered communities drive economic
-              growth and social progress, with no one left behind.
-            </p>
+            {aboutData?.OurVisionText ? (
+              aboutData.OurVisionText.split("\n").map((paragraph, idx) => (
+                <p
+                  key={idx}
+                  className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg"
+                >
+                  {paragraph}
+                </p>
+              ))
+            ) : (
+              <>
+                <p className="mt-6 text-base leading-relaxed text-[#5f6879] md:mt-8 md:text-lg">
+                  To establish ourselves as a leading force in social
+                  transformation across India — creating a future where every
+                  youth has access to quality skill development and every
+                  community has access to essential healthcare and economic
+                  opportunity.
+                </p>
+                <p className="mt-4 text-base leading-relaxed text-[#5f6879] md:text-lg">
+                  We envision an India where empowered communities drive
+                  economic growth and social progress, with no one left behind.
+                </p>
+              </>
+            )}
           </div>
         </div>
       </section>
@@ -385,9 +520,11 @@ export default function About() {
           </div>
 
           <div className="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {team.map((member) => (
-              <TeamCard key={member.name} {...member} />
-            ))}
+            {team.length > 0 ? (
+              team.map((member) => <TeamCard key={member.name} {...member} />)
+            ) : (
+              <p className="text-[#5f6879]">Loading team information...</p>
+            )}
           </div>
         </div>
       </section>
