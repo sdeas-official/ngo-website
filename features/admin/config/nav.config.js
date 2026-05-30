@@ -14,6 +14,7 @@ export const navGroups = [
       { key: "programsPage", label: "Programs Page", href: "/admin/pages/programs", icon: "target" },
       { key: "blogPage", label: "Blog Page", href: "/admin/pages/blog", icon: "edit" },
       { key: "partnerPage", label: "Partner With Us", href: "/admin/pages/partner", icon: "handshake" },
+      { key: "contactPage", label: "Contact Page", href: "/admin/pages/contact", icon: "mail" },
       { key: "gallery", label: "Gallery", href: "/admin/pages/gallery", icon: "image" },
     ],
   },

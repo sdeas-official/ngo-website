@@ -8,15 +8,45 @@ import {
   Phone,
   Facebook,
   Instagram,
+  Twitter,
   Linkedin,
   Youtube,
 } from "lucide-react";
 import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { createDatabasesClient } from "../../lib/appwriteClient";
+import { useContactContent, useSiteSettings } from "@/lib/useSiteContent";
+
+const SOCIAL_ICONS = {
+  facebook: Facebook,
+  instagram: Instagram,
+  twitter: Twitter,
+  linkedin: Linkedin,
+  youtube: Youtube,
+};
+
+// Render a string with "\n" line breaks as separate lines.
+function MultiLine({ text }) {
+  const lines = String(text || "")
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  return lines.map((line, i) => (
+    <span key={i}>
+      {line}
+      {i < lines.length - 1 ? <br /> : null}
+    </span>
+  ));
+}
 
 export default function Contact() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const content = useContactContent();
+  const settings = useSiteSettings();
+
+  const socials = Object.entries(settings.socialLinks || {})
+    .filter(([key, url]) => SOCIAL_ICONS[key] && url)
+    .map(([key, url]) => ({ Icon: SOCIAL_ICONS[key], url, key }));
 
   const [formData, setFormData] = useState({
     name: "",
@@ -88,21 +118,20 @@ export default function Contact() {
       <section className="relative isolate overflow-hidden">
         <div className="relative flex min-h-[56vh] items-center md:min-h-[62vh]">
           <img
-            src="https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=1600&q=80"
+            src={content.heroImage}
             alt="Contact us"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[#14532d73]" />
           <div className="relative z-10 mx-auto w-full max-w-350 px-4 py-20 md:px-8 lg:px-10">
             <p className="text-sm font-semibold tracking-[0.25em] text-[#dcfce7] uppercase">
-              Contact Us
+              {content.heroEyebrow}
             </p>
             <h1 className="mt-4 max-w-4xl font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
-              Let&apos;s Build Impact Together
+              {content.heroHeading}
             </h1>
             <p className="mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-              Have questions about our programs, volunteering, CSR partnerships,
-              or training opportunities? We&apos;d love to hear from you.
+              {content.heroSubtitle}
             </p>
           </div>
         </div>
@@ -113,14 +142,13 @@ export default function Contact() {
           <aside className="space-y-6 lg:col-span-1">
             <div>
               <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-                Get In Touch
+                {content.asideEyebrow}
               </p>
               <h2 className="mt-3 font-serif text-4xl font-bold text-[#1d2238] md:text-5xl">
-                We&apos;re Here to Help
+                {content.asideHeading}
               </h2>
               <p className="mt-4 text-base leading-relaxed text-[#5f6879]">
-                Reach out for admissions, partnerships, volunteering, and all
-                other collaboration opportunities.
+                {content.asideText}
               </p>
             </div>
 
@@ -132,14 +160,10 @@ export default function Contact() {
                   </span>
                   <div>
                     <h4 className="font-semibold text-[#1d2238]">
-                      Our Offices
+                      {content.officesTitle}
                     </h4>
                     <p className="mt-1.5 text-sm leading-relaxed text-[#5f6879]">
-                      A-547 Koel Nagar, Rourkela
-                      <br />
-                      B-5 Sector 20, Rourkela
-                      <br />
-                      Odisha, India
+                      <MultiLine text={content.officesAddress} />
                     </p>
                   </div>
                 </div>
@@ -151,12 +175,14 @@ export default function Contact() {
                     <Mail size={20} />
                   </span>
                   <div>
-                    <h4 className="font-semibold text-[#1d2238]">Email Us</h4>
+                    <h4 className="font-semibold text-[#1d2238]">
+                      {content.emailTitle}
+                    </h4>
                     <a
-                      href="mailto:info@sdeasfoundation.org"
+                      href={`mailto:${settings.contactEmail}`}
                       className="mt-1.5 inline-block text-sm text-[#63c37a] hover:text-[#459557]"
                     >
-                      info@sdeasfoundation.org
+                      {settings.contactEmail}
                     </a>
                   </div>
                 </div>
@@ -168,10 +194,15 @@ export default function Contact() {
                     <Phone size={20} />
                   </span>
                   <div>
-                    <h4 className="font-semibold text-[#1d2238]">Call Us</h4>
-                    <p className="mt-1.5 text-sm text-[#5f6879]">
-                      +91 93486 29818
-                    </p>
+                    <h4 className="font-semibold text-[#1d2238]">
+                      {content.phoneTitle}
+                    </h4>
+                    <a
+                      href={`tel:${(settings.contactPhone || "").replace(/\s/g, "")}`}
+                      className="mt-1.5 inline-block text-sm text-[#5f6879] hover:text-[#459557]"
+                    >
+                      {settings.contactPhone}
+                    </a>
                   </div>
                 </div>
               </div>
@@ -179,49 +210,55 @@ export default function Contact() {
 
             <div className="rounded-3xl border border-[#63c37a1f] bg-[#f0fdf4] p-5">
               <h4 className="font-serif text-2xl font-bold text-[#1d2238]">
-                Office Hours
+                {content.hoursTitle}
               </h4>
               <div className="mt-4 space-y-4 text-sm text-[#5f6879]">
                 <div>
-                  <p className="font-semibold text-[#1d2238]">Weekdays</p>
+                  <p className="font-semibold text-[#1d2238]">
+                    {content.weekdaysLabel}
+                  </p>
                   <p className="mt-1">
-                    Monday - Friday
-                    <br />
-                    9:00 AM - 6:00 PM
+                    <MultiLine text={content.weekdaysText} />
                   </p>
                 </div>
                 <div>
-                  <p className="font-semibold text-[#1d2238]">Weekends</p>
+                  <p className="font-semibold text-[#1d2238]">
+                    {content.weekendsLabel}
+                  </p>
                   <p className="mt-1">
-                    Saturday: 10:00 AM - 4:00 PM
-                    <br />
-                    Closed on Sundays
+                    <MultiLine text={content.weekendsText} />
                   </p>
                 </div>
               </div>
             </div>
 
-            <div>
-              <h4 className="mb-3 font-semibold text-[#1d2238]">Follow Us</h4>
-              <div className="flex gap-2.5">
-                {[Facebook, Instagram, Linkedin, Youtube].map((Icon, idx) => (
-                  <a
-                    key={`social-${idx}`}
-                    href="#"
-                    className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1f5f9] text-[#576076] transition-colors hover:bg-[#63c37a] hover:text-white"
-                    aria-label="social link"
-                  >
-                    <Icon size={18} />
-                  </a>
-                ))}
+            {socials.length ? (
+              <div>
+                <h4 className="mb-3 font-semibold text-[#1d2238]">
+                  {content.followLabel}
+                </h4>
+                <div className="flex gap-2.5">
+                  {socials.map(({ Icon, url, key }) => (
+                    <a
+                      key={key}
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-xl bg-[#f1f5f9] text-[#576076] transition-colors hover:bg-[#63c37a] hover:text-white"
+                      aria-label={key}
+                    >
+                      <Icon size={18} />
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
+            ) : null}
           </aside>
 
           <div className="lg:col-span-2">
             <div className="rounded-3xl border border-[#63c37a1f] bg-white p-6 shadow-[0_10px_30px_rgba(17,24,39,0.08)] md:p-8">
               <h3 className="font-serif text-3xl font-bold text-[#1d2238] md:text-4xl">
-                Send us a Message
+                {content.formHeading}
               </h3>
               <form onSubmit={handleSubmit} className="mt-7 space-y-5">
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
@@ -346,26 +383,38 @@ export default function Contact() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Find Us
+              {content.mapEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Visit Our Office
+              {content.mapHeading}
             </h2>
           </div>
 
-          <div className="mt-8 flex h-80 items-center justify-center rounded-3xl border border-[#63c37a1f] bg-white text-center shadow-[0_8px_24px_rgba(17,24,39,0.08)] md:h-96">
-            <div className="px-4">
-              <MapPin className="mx-auto mb-4 text-[#63c37a]" size={44} />
-              <h3 className="font-serif text-3xl font-bold text-[#1d2238]">
-                Location Map
-              </h3>
-              <p className="mt-3 text-[#5f6879]">
-                A-547 Koel Nagar, Rourkela, Odisha
-                <br />
-                Interactive map integration can be added here.
-              </p>
+          {content.mapEmbedUrl ? (
+            <div className="mt-8 overflow-hidden rounded-3xl border border-[#63c37a1f] shadow-[0_8px_24px_rgba(17,24,39,0.08)]">
+              <iframe
+                src={content.mapEmbedUrl}
+                title="Office location map"
+                className="h-80 w-full md:h-96"
+                style={{ border: 0 }}
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                allowFullScreen
+              />
             </div>
-          </div>
+          ) : (
+            <div className="mt-8 flex h-80 items-center justify-center rounded-3xl border border-[#63c37a1f] bg-white text-center shadow-[0_8px_24px_rgba(17,24,39,0.08)] md:h-96">
+              <div className="px-4">
+                <MapPin className="mx-auto mb-4 text-[#63c37a]" size={44} />
+                <h3 className="font-serif text-3xl font-bold text-[#1d2238]">
+                  Location Map
+                </h3>
+                <p className="mt-3 text-[#5f6879]">
+                  <MultiLine text={content.mapAddress} />
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
