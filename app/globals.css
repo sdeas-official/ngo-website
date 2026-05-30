@@ -10,6 +10,38 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* ---- Admin design tokens ----
+     Defined once here so the brand green (#63c37a) and the admin neutral palette
+     are no longer hand-typed as arbitrary hex values across thousands of lines.
+     Usage: bg-brand-500, text-ink, border-line, bg-surface-soft, etc. */
+  --color-brand-50: #f0f9f2;
+  --color-brand-100: #dcf0e1;
+  --color-brand-200: #bce3c6;
+  --color-brand-300: #8fd0a1;
+  --color-brand-400: #74cc88;
+  --color-brand-500: #63c37a;
+  --color-brand-600: #4a945c;
+  --color-brand-700: #3a7d49;
+
+  --color-ink: #1d2238;
+  --color-ink-soft: #5f6879;
+  --color-ink-muted: #576076;
+
+  --color-line: #dfe8df;
+  --color-line-soft: #e4ebee;
+  --color-field: #dbe3e7;
+
+  --color-surface: #ffffff;
+  --color-surface-soft: #f7fbf8;
+  --color-surface-tint: #f9fdf9;
+
+  --radius-card: 1.5rem;
+  --radius-panel: 2rem;
+
+  --shadow-card: 0 8px 20px rgba(17, 24, 39, 0.04);
+  --shadow-panel: 0 18px 40px rgba(17, 24, 39, 0.08);
+  --shadow-pop: 0 20px 44px rgba(17, 24, 39, 0.12);
 }
 
 body {
