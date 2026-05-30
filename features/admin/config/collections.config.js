@@ -194,6 +194,7 @@ export const donationsCollection = {
         fields: [
           { key: "donationTitle", label: "Donation title", type: "text", required: true },
           { key: "donationPrice", label: "Donation price (INR)", type: "number", required: true },
+          { key: "description", label: "Short description (under the title)", type: "text" },
           { key: "optimised", label: "Highlight as featured (Optimised)", type: "toggle" },
         ],
       },
@@ -201,15 +202,20 @@ export const donationsCollection = {
         title: "Benefits",
         fields: [{ key: "donationBenefits", label: "Donation benefits", type: "stringList", required: true }],
       },
+      {
+        title: "Ordering",
+        fields: [{ key: "sortOrder", label: "Sort order (lower shows first)", type: "number" }],
+      },
     ],
   },
-  emptyValues: { donationTitle: "", donationPrice: "", donationBenefits: [""], optimised: false },
+  emptyValues: { donationTitle: "", donationPrice: "", description: "", donationBenefits: [""], optimised: false, sortOrder: "" },
   toForm(doc) {
     const benefits = list(doc.donationBenefits);
     return {
       donationTitle: str(doc.donationTitle),
       donationPrice:
         typeof doc.donationPrice === "number" ? String(doc.donationPrice) : str(doc.donationPrice),
+      description: str(doc.description),
       donationBenefits: benefits.length ? benefits : [""],
       optimised:
         typeof doc.optimised === "boolean"
@@ -217,6 +223,7 @@ export const donationsCollection = {
           : typeof doc.best === "boolean"
             ? doc.best
             : false,
+      sortOrder: typeof doc.sortOrder === "number" ? String(doc.sortOrder) : str(doc.sortOrder),
     };
   },
   validate(payload) {
@@ -231,11 +238,13 @@ export const donationsCollection = {
     return {
       donationTitle: (form.donationTitle || "").trim(),
       donationPrice: Number(form.donationPrice || 0),
+      description: (form.description || "").trim(),
       donationBenefits: (form.donationBenefits || [])
         .filter((item) => typeof item === "string")
         .map((item) => item.trim())
         .filter(Boolean),
       best: Boolean(form.optimised),
+      sortOrder: Number.isFinite(Number(form.sortOrder)) ? Number(form.sortOrder || 0) : 0,
     };
   },
 };

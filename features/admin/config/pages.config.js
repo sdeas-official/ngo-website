@@ -339,6 +339,152 @@ export const blogPage = {
   ],
 };
 
+export const partnerPage = {
+  key: "partner",
+  label: "Partner With Us Page",
+  description: "Sections are listed in the same order they appear on your live Partner With Us page.",
+  collections: ["partnerPage"],
+  sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroHeading",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "partnerPage" },
+        { key: "heroHeading", label: "Heading", type: "text", collection: "partnerPage" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "partnerPage" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "partnerPage" },
+      ],
+    },
+    {
+      id: "donate",
+      title: "Donation section — heading",
+      description: "The heading above the donation tier cards.",
+      summary: "text:donateHeading",
+      fields: [
+        { key: "donateEyebrow", label: "Eyebrow", type: "text", collection: "partnerPage" },
+        { key: "donateHeading", label: "Heading", type: "text", collection: "partnerPage" },
+        { key: "donateSubtitle", label: "Subtitle", type: "textarea", collection: "partnerPage" },
+      ],
+    },
+    {
+      id: "volunteer",
+      title: "Volunteer section",
+      description: "The 'Become a Volunteer' intro, role cards and form heading.",
+      summary: "text:volunteerHeading",
+      fields: [
+        { key: "volunteerEyebrow", label: "Eyebrow", type: "text", collection: "partnerPage" },
+        { key: "volunteerHeading", label: "Heading", type: "text", collection: "partnerPage" },
+        { key: "volunteerIntro", label: "Intro paragraph", type: "textarea", collection: "partnerPage" },
+        {
+          key: "volunteerRoles",
+          label: "Role cards (leave Icon blank — only Title & Description show)",
+          type: "valuesList",
+          collection: "partnerPage",
+          json: true,
+        },
+        { key: "formHeading", label: "Application form heading", type: "text", collection: "partnerPage" },
+      ],
+    },
+    {
+      id: "partners",
+      title: "Partners & CTA section",
+      description: "The partner categories grid and the closing call-to-action banner.",
+      summary: "text:partnersHeading",
+      fields: [
+        { key: "partnersEyebrow", label: "Eyebrow", type: "text", collection: "partnerPage" },
+        { key: "partnersHeading", label: "Heading", type: "text", collection: "partnerPage" },
+        { key: "partnersSubtitle", label: "Subtitle", type: "textarea", collection: "partnerPage" },
+        { key: "partnersList", label: "Partner categories", type: "stringList", collection: "partnerPage" },
+        { key: "ctaHeading", label: "CTA heading", type: "text", collection: "partnerPage" },
+        { key: "ctaText", label: "CTA paragraph", type: "textarea", collection: "partnerPage" },
+        { key: "ctaButtonLabel", label: "CTA button label", type: "text", collection: "partnerPage" },
+        { key: "ctaButtonHref", label: "CTA button link", type: "text", collection: "partnerPage" },
+      ],
+    },
+  ],
+  overview: [
+    { type: "section", id: "hero" },
+    { type: "section", id: "donate" },
+    {
+      type: "link",
+      title: "Donation Tiers",
+      description: "Add, edit and reorder the donation cards.",
+      href: "/admin/collections/donations",
+    },
+    { type: "section", id: "volunteer" },
+    {
+      type: "link",
+      title: "Volunteer Submissions",
+      description: "Read the volunteer applications people submit.",
+      href: "/admin/inbox/partner",
+    },
+    { type: "section", id: "partners" },
+  ],
+};
+
+export const galleryPage = {
+  key: "gallery",
+  label: "Gallery Page",
+  description: "Sections are listed in the same order they appear on your live Gallery page.",
+  collections: ["galleryContent"],
+  sections: [
+    {
+      id: "hero",
+      title: "Hero",
+      description: "The banner heading, intro text and background image.",
+      summary: "text:heroHeading",
+      fields: [
+        { key: "heroEyebrow", label: "Eyebrow (small label)", type: "text", collection: "galleryContent" },
+        { key: "heroHeading", label: "Heading", type: "text", collection: "galleryContent" },
+        { key: "heroSubtitle", label: "Intro paragraph", type: "textarea", collection: "galleryContent" },
+        { key: "heroImage", label: "Background image", type: "image", collection: "galleryContent" },
+      ],
+    },
+    {
+      id: "photo",
+      title: "Photo Gallery — heading",
+      description: "The heading above the photo grid.",
+      summary: "text:photoHeading",
+      fields: [
+        { key: "photoEyebrow", label: "Eyebrow", type: "text", collection: "galleryContent" },
+        { key: "photoHeading", label: "Heading", type: "text", collection: "galleryContent" },
+        { key: "photoSubtitle", label: "Subtitle", type: "textarea", collection: "galleryContent" },
+      ],
+    },
+    {
+      id: "video",
+      title: "Video Gallery section",
+      description: "The heading and the video cards below the photo grid.",
+      summary: "text:videoHeading",
+      fields: [
+        { key: "videoEyebrow", label: "Eyebrow", type: "text", collection: "galleryContent" },
+        { key: "videoHeading", label: "Heading", type: "text", collection: "galleryContent" },
+        { key: "videoSubtitle", label: "Subtitle", type: "textarea", collection: "galleryContent" },
+        {
+          key: "videos",
+          label: "Video cards (leave Icon blank — only Title & Description show)",
+          type: "valuesList",
+          collection: "galleryContent",
+          json: true,
+        },
+      ],
+    },
+  ],
+  overview: [
+    { type: "section", id: "hero" },
+    { type: "section", id: "photo" },
+    {
+      type: "link",
+      title: "Photos",
+      description: "Upload, organise and remove the images in the gallery grid.",
+      href: "/admin/pages/gallery/images",
+    },
+    { type: "section", id: "video" },
+  ],
+};
+
 export const galleryFields = [
   { key: "AllImages", label: "All" },
   { key: "TrainingImages", label: "Training" },
@@ -350,4 +496,6 @@ export const pagesByKey = {
   about: aboutPage,
   programs: programsPage,
   blog: blogPage,
+  partner: partnerPage,
+  gallery: galleryPage,
 };

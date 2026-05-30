@@ -13,6 +13,7 @@ export const navGroups = [
       { key: "team", label: "Team Members", href: "/admin/collections/team", icon: "users", badge: "team" },
       { key: "programsPage", label: "Programs Page", href: "/admin/pages/programs", icon: "target" },
       { key: "blogPage", label: "Blog Page", href: "/admin/pages/blog", icon: "edit" },
+      { key: "partnerPage", label: "Partner With Us", href: "/admin/pages/partner", icon: "handshake" },
       { key: "gallery", label: "Gallery", href: "/admin/pages/gallery", icon: "image" },
     ],
   },

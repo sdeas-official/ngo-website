@@ -6,22 +6,14 @@ import Navbar from "../components/Navbar";
 import FooterSection from "../components/FooterSection";
 import { createDatabasesClient } from "@/lib/appwriteClient";
 import { Query } from "appwrite";
+import { useGalleryContent, GALLERY_DEFAULTS } from "@/lib/useSiteContent";
 
 const categories = ["All", "Training", "Community"];
 
-const videos = [
-  {
-    title: "Industrial Training Program Overview",
-    desc: "A glimpse into our practical training methodology and student experience.",
-  },
-  {
-    title: "Student Testimonials",
-    desc: "Real stories from learners whose lives were transformed through our programs.",
-  },
-];
-
 export default function Gallery() {
   const { databases, config } = useMemo(() => createDatabasesClient(), []);
+  const content = useGalleryContent();
+  const videos = content.videos?.length ? content.videos : GALLERY_DEFAULTS.videos;
   const [selectedImage, setSelectedImage] = useState(null);
   const [activeFilter, setActiveFilter] = useState("All");
   const [photos, setPhotos] = useState([]);
@@ -123,21 +115,20 @@ export default function Gallery() {
       <section className="relative isolate overflow-hidden">
         <div className="relative flex min-h-[56vh] items-center md:min-h-[62vh]">
           <img
-            src="https://images.unsplash.com/photo-1758599667729-a6f0f8bd213b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1400"
+            src={content.heroImage}
             alt="Gallery"
             className="absolute inset-0 h-full w-full object-cover"
           />
           <div className="absolute inset-0 bg-[#14532d70]" />
           <div className="relative z-10 mx-auto w-full max-w-350 px-4 py-20 md:px-8 lg:px-10">
             <p className="text-sm font-semibold tracking-[0.25em] text-[#dcfce7] uppercase">
-              Media Gallery
+              {content.heroEyebrow}
             </p>
             <h1 className="mt-4 font-serif text-4xl font-extrabold leading-tight text-white md:text-6xl">
-              Moments of Impact
+              {content.heroHeading}
             </h1>
             <p className="mt-6 max-w-3xl text-base text-white/90 md:text-xl">
-              Capturing transformation, learning, and community empowerment
-              through our initiatives.
+              {content.heroSubtitle}
             </p>
           </div>
         </div>
@@ -147,14 +138,13 @@ export default function Gallery() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Photo Gallery
+              {content.photoEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Explore Our Work
+              {content.photoHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Browse events, training sessions, field activities, and success
-              stories.
+              {content.photoSubtitle}
             </p>
 
             <div className="mt-8 flex flex-wrap justify-center gap-2.5 md:gap-3">
@@ -205,13 +195,13 @@ export default function Gallery() {
         <div className="mx-auto w-full max-w-350 px-4 md:px-8 lg:px-10">
           <div className="text-center">
             <p className="text-xl font-semibold text-[#63c37a] md:text-2xl">
-              Video Gallery
+              {content.videoEyebrow}
             </p>
             <h2 className="mt-4 font-serif text-4xl font-bold text-[#1d2238] md:text-6xl">
-              Stories in Motion
+              {content.videoHeading}
             </h2>
             <p className="mx-auto mt-5 max-w-2xl text-[#5f6879] md:text-lg">
-              Training highlights, testimonials, and community impact snapshots.
+              {content.videoSubtitle}
             </p>
           </div>
 

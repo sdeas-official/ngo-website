@@ -19,6 +19,9 @@ const COLLECTION_FALLBACKS = {
   teamMembers: "team_members",
   programsContent: "programs_content",
   blogContent: "blog_content",
+  partnerPage: "partner_page",
+  donationTiers: "donation_tiers",
+  galleryContent: "gallery_content",
   registrations: "registration_",
 };
 
@@ -26,9 +29,11 @@ export function createAdminRepo() {
   const { databases, config } = createDatabasesClient();
 
   function resolveCollectionId(key) {
-    // partnerDonations historically resolved to partnerPage || partnerResponses
+    // Donation tiers now live in their own collection (donation_tiers). They were
+    // historically mixed into the volunteer-responses table (partner_with_us_table);
+    // see scripts/setup-partner.mjs for the split + repair.
     if (key === "partnerDonations") {
-      return config.collections.partnerPage || config.collections.partnerResponses || "";
+      return config.collections.donationTiers || COLLECTION_FALLBACKS.donationTiers || "";
     }
     return config.collections[key] || COLLECTION_FALLBACKS[key] || "";
   }
